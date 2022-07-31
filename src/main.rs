@@ -1,7 +1,5 @@
-use mitre_cli::commands::MitreCli;
-use structopt::StructOpt;
-
+use mitre_cli::{HttpReqwest, attack::{AttackService, tactics, techniques}};
 
 fn main() {
-    MitreCli::from_args();
+    
 }

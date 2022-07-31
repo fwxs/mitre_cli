@@ -1,0 +1,3032 @@
+
+
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-62667723-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'UA-62667723-1');
+        </script>
+        <meta name="google-site-verification" content="2oJKLqNN62z6AOCb0A0IXGtbQuj-lev5YPAHFF_cbHQ"/>
+
+        <meta charset='utf-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no'>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <link rel='shortcut icon' href='/theme/favicon.ico' type='image/x-icon'>
+        <title>Data Sources | MITRE ATT&CK&reg;</title>
+        <!-- Bootstrap CSS -->
+        <link rel='stylesheet' href='/theme/style/bootstrap.min.css' />
+        <link rel='stylesheet' href='/theme/style/bootstrap-glyphicon.min.css' />
+        <link rel='stylesheet' href='/theme/style/bootstrap-tourist.css' />
+        <link rel='stylesheet' href='/theme/style/bootstrap-select.min.css' />
+        <link rel="stylesheet" type="text/css" href="/theme/style.min.css?a2a04da3">
+</head>
+
+<body>
+
+    <div class="container-fluid attack-website-wrapper d-flex flex-column h-100">
+        <div class="row sticky-top flex-grow-0 flex-shrink-1">
+            <!-- header elements -->
+            <header class="col px-0">
+    
+                    <nav class='navbar navbar-expand-lg navbar-dark position-static'>
+        <a class='navbar-brand' href='/'><img src="/theme/images/mitre_attack_logo.png" class="attack-logo"></a>
+        <button class='navbar-toggler' type='button' data-toggle='collapse' data-target='#navbarCollapse'
+                aria-controls='navbarCollapse' aria-expanded='false' aria-label='Toggle navigation'>
+                <span class='navbar-toggler-icon'></span>
+        </button>
+        <div class='collapse navbar-collapse' id='navbarCollapse'>
+            <ul class='nav nav-tabs ml-auto'>
+                        <li class="nav-item">
+                            <a href="/matrices/"  class="nav-link" ><b>Matrices</b></a>
+                        </li>
+                        <li class="nav-item dropdown">
+                                
+    <a class="nav-link dropdown-toggle" href="/tactics/" id="navbarDropdown" role="button"
+    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <b>Tactics</b>
+    </a>
+    <div class="dropdown-menu " aria-labelledby="navbarDropdown">
+                <a class="dropdown-item" href="/tactics/enterprise/">Enterprise</a>
+                <a class="dropdown-item" href="/tactics/mobile/">Mobile</a>
+                <a class="dropdown-item" href="/tactics/ics/">ICS</a>
+    </div>
+
+
+                        </li>
+                        <li class="nav-item dropdown">
+                                
+    <a class="nav-link dropdown-toggle" href="/techniques/" id="navbarDropdown" role="button"
+    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <b>Techniques</b>
+    </a>
+    <div class="dropdown-menu " aria-labelledby="navbarDropdown">
+                <a class="dropdown-item" href="/techniques/enterprise/">Enterprise</a>
+                <a class="dropdown-item" href="/techniques/mobile/">Mobile</a>
+                <a class="dropdown-item" href="/techniques/ics/">ICS</a>
+    </div>
+
+
+                        </li>
+                        <li class="nav-item">
+                            <a href="/datasources"  class="nav-link" ><b>Data Sources</b></a>
+                        </li>
+                        <li class="nav-item dropdown">
+                                
+    <a class="nav-link dropdown-toggle" href="/mitigations/" id="navbarDropdown" role="button"
+    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <b>Mitigations</b>
+    </a>
+    <div class="dropdown-menu " aria-labelledby="navbarDropdown">
+                <a class="dropdown-item" href="/mitigations/enterprise/">Enterprise</a>
+                <a class="dropdown-item" href="/mitigations/mobile/">Mobile</a>
+                <a class="dropdown-item" href="/mitigations/ics/">ICS</a>
+    </div>
+
+
+                        </li>
+                        <li class="nav-item">
+                            <a href="/groups"  class="nav-link" ><b>Groups</b></a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/software/"  class="nav-link" ><b>Software</b></a>
+                        </li>
+                        <li class="nav-item dropdown">
+                                
+    <a class="nav-link dropdown-toggle" href="/resources/" id="navbarDropdown" role="button"
+    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <b>Resources</b>
+    </a>
+    <div class="dropdown-menu " aria-labelledby="navbarDropdown">
+                <a class="dropdown-item" href="/resources/">General Information</a>
+                <a class="dropdown-item" href="/resources/getting-started/">Getting Started</a>
+                <a class="dropdown-item" href="/resources/training/">Training</a>
+                <a class="dropdown-item" href="/resources/attackcon/">ATT&CKcon</a>
+                <a class="dropdown-item" href="/resources/working-with-attack/">Working with ATT&CK</a>
+                <a class="dropdown-item" href="/resources/faq/">FAQ</a>
+                <a class="dropdown-item" href="/resources/updates/">Updates</a>
+                <a class="dropdown-item" href="/resources/versions/">Versions of ATT&CK</a>
+                <a class="dropdown-item" href="/resources/related-projects/">Related Projects</a>
+    </div>
+
+
+                        </li>
+                        <li class="nav-item">
+                                <a href="https://medium.com/mitre-attack/" target="_blank" class="nav-link">
+        <b>Blog</b>&nbsp;
+        <img src="/theme/images/external-site.svg" alt="External site" class="external-icon" />
+    </a>
+
+                        </li>
+                        <li class="nav-item">
+                            <a href="/resources/contribute/"  class="nav-link" ><b>Contribute</b></a>
+                        </li>
+                        <li class="nav-item">
+                            <button id="search-button" class="btn search-button">Search <div class="search-icon"></div></button>
+                        </li>
+            </ul>
+        </div>
+    </nav>
+
+            </header>
+        </div>
+        <div class="row flex-grow-0 flex-shrink-1">
+            <!-- banner elements -->
+            <div class="col px-0">
+                <!-- don't edit or remove the line below even though it's commented out, it gets parsed and replaced by the versioning feature -->
+                <!-- !versions banner! -->
+            </div>
+        </div>
+        <div class="row flex-grow-1 flex-shrink-0">
+            <!-- main content elements -->
+            <!--start-indexing-for-search-->
+
+ 
+     
+    <div class="sidebar nav sticky-top flex-column col-xl-3 col-lg-3 col-md-4 pr-0 pt-4 pb-3 pl-3 border-right" id="v-tab" role="tablist" aria-orientation="vertical">
+<!--stop-indexing-for-search-->
+    <div class="side-nav-desktop-view h-100">
+        <div class="sidenav-wrapper">
+    <div class="heading" id="v-home-tab" aria-selected="false">DATA SOURCES</div>
+    <div class="checkbox-div" id="v-home-tab" aria-selected="false">
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="enterpriseSwitch" onchange="filterTables(enterpriseSwitch, icsSwitch)">
+            <label class="custom-control-label" for="enterpriseSwitch">Enterprise</label>
+        </div>
+        <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="icsSwitch" onchange="filterTables(icsSwitch, enterpriseSwitch)">
+            <label class="custom-control-label" for="icsSwitch">ICS</label>
+        </div>
+    </div>
+    <div class="sidenav-list">
+        
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0026">
+                <a href="/datasources/DS0026/">
+                    Active Directory
+                </a>
+            <div class="expand-button collapsed" id="DS0026-header" data-toggle="collapse" data-target="#DS0026-body" aria-expanded="false" aria-controls="#DS0026-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0026-body" aria-labelledby="DS0026-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0026-Active Directory Credential Request">
+                <a href="/datasources/DS0026/#Active%20Directory%20Credential%20Request">
+                    Active Directory Credential Request
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0026-Active Directory Object Access">
+                <a href="/datasources/DS0026/#Active%20Directory%20Object%20Access">
+                    Active Directory Object Access
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0026-Active Directory Object Creation">
+                <a href="/datasources/DS0026/#Active%20Directory%20Object%20Creation">
+                    Active Directory Object Creation
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0026-Active Directory Object Deletion">
+                <a href="/datasources/DS0026/#Active%20Directory%20Object%20Deletion">
+                    Active Directory Object Deletion
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0026-Active Directory Object Modification">
+                <a href="/datasources/DS0026/#Active%20Directory%20Object%20Modification">
+                    Active Directory Object Modification
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise ics " id="DS0015">
+                <a href="/datasources/DS0015/">
+                    Application Log
+                </a>
+            <div class="expand-button collapsed" id="DS0015-header" data-toggle="collapse" data-target="#DS0015-body" aria-expanded="false" aria-controls="#DS0015-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0015-body" aria-labelledby="DS0015-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0015-Application Log Content">
+                <a href="/datasources/DS0015/#Application%20Log%20Content">
+                    Application Log Content
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0037">
+                <a href="/datasources/DS0037/">
+                    Certificate
+                </a>
+            <div class="expand-button collapsed" id="DS0037-header" data-toggle="collapse" data-target="#DS0037-body" aria-expanded="false" aria-controls="#DS0037-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0037-body" aria-labelledby="DS0037-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0037-Certificate Registration">
+                <a href="/datasources/DS0037/#Certificate%20Registration">
+                    Certificate Registration
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0025">
+                <a href="/datasources/DS0025/">
+                    Cloud Service
+                </a>
+            <div class="expand-button collapsed" id="DS0025-header" data-toggle="collapse" data-target="#DS0025-body" aria-expanded="false" aria-controls="#DS0025-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0025-body" aria-labelledby="DS0025-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0025-Cloud Service Disable">
+                <a href="/datasources/DS0025/#Cloud%20Service%20Disable">
+                    Cloud Service Disable
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0025-Cloud Service Enumeration">
+                <a href="/datasources/DS0025/#Cloud%20Service%20Enumeration">
+                    Cloud Service Enumeration
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="DS0025-Cloud Service Metadata">
+                <a href="/datasources/DS0025/#Cloud%20Service%20Metadata">
+                    Cloud Service Metadata
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0025-Cloud Service Modification">
+                <a href="/datasources/DS0025/#Cloud%20Service%20Modification">
+                    Cloud Service Modification
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0010">
+                <a href="/datasources/DS0010/">
+                    Cloud Storage
+                </a>
+            <div class="expand-button collapsed" id="DS0010-header" data-toggle="collapse" data-target="#DS0010-body" aria-expanded="false" aria-controls="#DS0010-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0010-body" aria-labelledby="DS0010-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0010-Cloud Storage Access">
+                <a href="/datasources/DS0010/#Cloud%20Storage%20Access">
+                    Cloud Storage Access
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0010-Cloud Storage Creation">
+                <a href="/datasources/DS0010/#Cloud%20Storage%20Creation">
+                    Cloud Storage Creation
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0010-Cloud Storage Deletion">
+                <a href="/datasources/DS0010/#Cloud%20Storage%20Deletion">
+                    Cloud Storage Deletion
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0010-Cloud Storage Enumeration">
+                <a href="/datasources/DS0010/#Cloud%20Storage%20Enumeration">
+                    Cloud Storage Enumeration
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0010-Cloud Storage Metadata">
+                <a href="/datasources/DS0010/#Cloud%20Storage%20Metadata">
+                    Cloud Storage Metadata
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0010-Cloud Storage Modification">
+                <a href="/datasources/DS0010/#Cloud%20Storage%20Modification">
+                    Cloud Storage Modification
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  " id="DS0031">
+                <a href="/datasources/DS0031/">
+                    Cluster
+                </a>
+            <div class="expand-button collapsed" id="DS0031-header" data-toggle="collapse" data-target="#DS0031-body" aria-expanded="false" aria-controls="#DS0031-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0031-body" aria-labelledby="DS0031-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="DS0031-Cluster Metadata">
+                <a href="/datasources/DS0031/#Cluster%20Metadata">
+                    Cluster Metadata
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise ics " id="DS0017">
+                <a href="/datasources/DS0017/">
+                    Command
+                </a>
+            <div class="expand-button collapsed" id="DS0017-header" data-toggle="collapse" data-target="#DS0017-body" aria-expanded="false" aria-controls="#DS0017-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0017-body" aria-labelledby="DS0017-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0017-Command Execution">
+                <a href="/datasources/DS0017/#Command%20Execution">
+                    Command Execution
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0032">
+                <a href="/datasources/DS0032/">
+                    Container
+                </a>
+            <div class="expand-button collapsed" id="DS0032-header" data-toggle="collapse" data-target="#DS0032-body" aria-expanded="false" aria-controls="#DS0032-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0032-body" aria-labelledby="DS0032-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0032-Container Creation">
+                <a href="/datasources/DS0032/#Container%20Creation">
+                    Container Creation
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0032-Container Enumeration">
+                <a href="/datasources/DS0032/#Container%20Enumeration">
+                    Container Enumeration
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="DS0032-Container Metadata">
+                <a href="/datasources/DS0032/#Container%20Metadata">
+                    Container Metadata
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0032-Container Start">
+                <a href="/datasources/DS0032/#Container%20Start">
+                    Container Start
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0038">
+                <a href="/datasources/DS0038/">
+                    Domain Name
+                </a>
+            <div class="expand-button collapsed" id="DS0038-header" data-toggle="collapse" data-target="#DS0038-body" aria-expanded="false" aria-controls="#DS0038-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0038-body" aria-labelledby="DS0038-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0038-Active DNS">
+                <a href="/datasources/DS0038/#Active%20DNS">
+                    Active DNS
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0038-Domain Registration">
+                <a href="/datasources/DS0038/#Domain%20Registration">
+                    Domain Registration
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0038-Passive DNS">
+                <a href="/datasources/DS0038/#Passive%20DNS">
+                    Passive DNS
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise ics " id="DS0016">
+                <a href="/datasources/DS0016/">
+                    Drive
+                </a>
+            <div class="expand-button collapsed" id="DS0016-header" data-toggle="collapse" data-target="#DS0016-body" aria-expanded="false" aria-controls="#DS0016-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0016-body" aria-labelledby="DS0016-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0016-Drive Access">
+                <a href="/datasources/DS0016/#Drive%20Access">
+                    Drive Access
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0016-Drive Creation">
+                <a href="/datasources/DS0016/#Drive%20Creation">
+                    Drive Creation
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0016-Drive Modification">
+                <a href="/datasources/DS0016/#Drive%20Modification">
+                    Drive Modification
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0027">
+                <a href="/datasources/DS0027/">
+                    Driver
+                </a>
+            <div class="expand-button collapsed" id="DS0027-header" data-toggle="collapse" data-target="#DS0027-body" aria-expanded="false" aria-controls="#DS0027-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0027-body" aria-labelledby="DS0027-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0027-Driver Load">
+                <a href="/datasources/DS0027/#Driver%20Load">
+                    Driver Load
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0027-Driver Metadata">
+                <a href="/datasources/DS0027/#Driver%20Metadata">
+                    Driver Metadata
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise ics " id="DS0022">
+                <a href="/datasources/DS0022/">
+                    File
+                </a>
+            <div class="expand-button collapsed" id="DS0022-header" data-toggle="collapse" data-target="#DS0022-body" aria-expanded="false" aria-controls="#DS0022-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0022-body" aria-labelledby="DS0022-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0022-File Access">
+                <a href="/datasources/DS0022/#File%20Access">
+                    File Access
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0022-File Creation">
+                <a href="/datasources/DS0022/#File%20Creation">
+                    File Creation
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0022-File Deletion">
+                <a href="/datasources/DS0022/#File%20Deletion">
+                    File Deletion
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0022-File Metadata">
+                <a href="/datasources/DS0022/#File%20Metadata">
+                    File Metadata
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0022-File Modification">
+                <a href="/datasources/DS0022/#File%20Modification">
+                    File Modification
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0018">
+                <a href="/datasources/DS0018/">
+                    Firewall
+                </a>
+            <div class="expand-button collapsed" id="DS0018-header" data-toggle="collapse" data-target="#DS0018-body" aria-expanded="false" aria-controls="#DS0018-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0018-body" aria-labelledby="DS0018-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0018-Firewall Disable">
+                <a href="/datasources/DS0018/#Firewall%20Disable">
+                    Firewall Disable
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0018-Firewall Enumeration">
+                <a href="/datasources/DS0018/#Firewall%20Enumeration">
+                    Firewall Enumeration
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0018-Firewall Metadata">
+                <a href="/datasources/DS0018/#Firewall%20Metadata">
+                    Firewall Metadata
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0018-Firewall Rule Modification">
+                <a href="/datasources/DS0018/#Firewall%20Rule%20Modification">
+                    Firewall Rule Modification
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise ics " id="DS0001">
+                <a href="/datasources/DS0001/">
+                    Firmware
+                </a>
+            <div class="expand-button collapsed" id="DS0001-header" data-toggle="collapse" data-target="#DS0001-body" aria-expanded="false" aria-controls="#DS0001-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0001-body" aria-labelledby="DS0001-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0001-Firmware Modification">
+                <a href="/datasources/DS0001/#Firmware%20Modification">
+                    Firmware Modification
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0036">
+                <a href="/datasources/DS0036/">
+                    Group
+                </a>
+            <div class="expand-button collapsed" id="DS0036-header" data-toggle="collapse" data-target="#DS0036-body" aria-expanded="false" aria-controls="#DS0036-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0036-body" aria-labelledby="DS0036-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0036-Group Enumeration">
+                <a href="/datasources/DS0036/#Group%20Enumeration">
+                    Group Enumeration
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0036-Group Metadata">
+                <a href="/datasources/DS0036/#Group%20Metadata">
+                    Group Metadata
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0036-Group Modification">
+                <a href="/datasources/DS0036/#Group%20Modification">
+                    Group Modification
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0007">
+                <a href="/datasources/DS0007/">
+                    Image
+                </a>
+            <div class="expand-button collapsed" id="DS0007-header" data-toggle="collapse" data-target="#DS0007-body" aria-expanded="false" aria-controls="#DS0007-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0007-body" aria-labelledby="DS0007-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0007-Image Creation">
+                <a href="/datasources/DS0007/#Image%20Creation">
+                    Image Creation
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0007-Image Deletion">
+                <a href="/datasources/DS0007/#Image%20Deletion">
+                    Image Deletion
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0007-Image Metadata">
+                <a href="/datasources/DS0007/#Image%20Metadata">
+                    Image Metadata
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0007-Image Modification">
+                <a href="/datasources/DS0007/#Image%20Modification">
+                    Image Modification
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0030">
+                <a href="/datasources/DS0030/">
+                    Instance
+                </a>
+            <div class="expand-button collapsed" id="DS0030-header" data-toggle="collapse" data-target="#DS0030-body" aria-expanded="false" aria-controls="#DS0030-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0030-body" aria-labelledby="DS0030-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0030-Instance Creation">
+                <a href="/datasources/DS0030/#Instance%20Creation">
+                    Instance Creation
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0030-Instance Deletion">
+                <a href="/datasources/DS0030/#Instance%20Deletion">
+                    Instance Deletion
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0030-Instance Enumeration">
+                <a href="/datasources/DS0030/#Instance%20Enumeration">
+                    Instance Enumeration
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0030-Instance Metadata">
+                <a href="/datasources/DS0030/#Instance%20Metadata">
+                    Instance Metadata
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0030-Instance Modification">
+                <a href="/datasources/DS0030/#Instance%20Modification">
+                    Instance Modification
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0030-Instance Start">
+                <a href="/datasources/DS0030/#Instance%20Start">
+                    Instance Start
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0030-Instance Stop">
+                <a href="/datasources/DS0030/#Instance%20Stop">
+                    Instance Stop
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0035">
+                <a href="/datasources/DS0035/">
+                    Internet Scan
+                </a>
+            <div class="expand-button collapsed" id="DS0035-header" data-toggle="collapse" data-target="#DS0035-body" aria-expanded="false" aria-controls="#DS0035-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0035-body" aria-labelledby="DS0035-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0035-Response Content">
+                <a href="/datasources/DS0035/#Response%20Content">
+                    Response Content
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0035-Response Metadata">
+                <a href="/datasources/DS0035/#Response%20Metadata">
+                    Response Metadata
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0008">
+                <a href="/datasources/DS0008/">
+                    Kernel
+                </a>
+            <div class="expand-button collapsed" id="DS0008-header" data-toggle="collapse" data-target="#DS0008-body" aria-expanded="false" aria-controls="#DS0008-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0008-body" aria-labelledby="DS0008-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0008-Kernel Module Load">
+                <a href="/datasources/DS0008/#Kernel%20Module%20Load">
+                    Kernel Module Load
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise ics " id="DS0028">
+                <a href="/datasources/DS0028/">
+                    Logon Session
+                </a>
+            <div class="expand-button collapsed" id="DS0028-header" data-toggle="collapse" data-target="#DS0028-body" aria-expanded="false" aria-controls="#DS0028-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0028-body" aria-labelledby="DS0028-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0028-Logon Session Creation">
+                <a href="/datasources/DS0028/#Logon%20Session%20Creation">
+                    Logon Session Creation
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0028-Logon Session Metadata">
+                <a href="/datasources/DS0028/#Logon%20Session%20Metadata">
+                    Logon Session Metadata
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0004">
+                <a href="/datasources/DS0004/">
+                    Malware Repository
+                </a>
+            <div class="expand-button collapsed" id="DS0004-header" data-toggle="collapse" data-target="#DS0004-body" aria-expanded="false" aria-controls="#DS0004-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0004-body" aria-labelledby="DS0004-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0004-Malware Content">
+                <a href="/datasources/DS0004/#Malware%20Content">
+                    Malware Content
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0004-Malware Metadata">
+                <a href="/datasources/DS0004/#Malware%20Metadata">
+                    Malware Metadata
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise ics " id="DS0011">
+                <a href="/datasources/DS0011/">
+                    Module
+                </a>
+            <div class="expand-button collapsed" id="DS0011-header" data-toggle="collapse" data-target="#DS0011-body" aria-expanded="false" aria-controls="#DS0011-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0011-body" aria-labelledby="DS0011-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0011-Module Load">
+                <a href="/datasources/DS0011/#Module%20Load">
+                    Module Load
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0023">
+                <a href="/datasources/DS0023/">
+                    Named Pipe
+                </a>
+            <div class="expand-button collapsed" id="DS0023-header" data-toggle="collapse" data-target="#DS0023-body" aria-expanded="false" aria-controls="#DS0023-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0023-body" aria-labelledby="DS0023-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0023-Named Pipe Metadata">
+                <a href="/datasources/DS0023/#Named%20Pipe%20Metadata">
+                    Named Pipe Metadata
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise ics " id="DS0033">
+                <a href="/datasources/DS0033/">
+                    Network Share
+                </a>
+            <div class="expand-button collapsed" id="DS0033-header" data-toggle="collapse" data-target="#DS0033-body" aria-expanded="false" aria-controls="#DS0033-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0033-body" aria-labelledby="DS0033-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0033-Network Share Access">
+                <a href="/datasources/DS0033/#Network%20Share%20Access">
+                    Network Share Access
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise ics " id="DS0029">
+                <a href="/datasources/DS0029/">
+                    Network Traffic
+                </a>
+            <div class="expand-button collapsed" id="DS0029-header" data-toggle="collapse" data-target="#DS0029-body" aria-expanded="false" aria-controls="#DS0029-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0029-body" aria-labelledby="DS0029-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0029-Network Connection Creation">
+                <a href="/datasources/DS0029/#Network%20Connection%20Creation">
+                    Network Connection Creation
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0029-Network Traffic Content">
+                <a href="/datasources/DS0029/#Network%20Traffic%20Content">
+                    Network Traffic Content
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0029-Network Traffic Flow">
+                <a href="/datasources/DS0029/#Network%20Traffic%20Flow">
+                    Network Traffic Flow
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  ics " id="DS0040">
+                <a href="/datasources/DS0040/">
+                    Operational Databases
+                </a>
+            <div class="expand-button collapsed" id="DS0040-header" data-toggle="collapse" data-target="#DS0040-body" aria-expanded="false" aria-controls="#DS0040-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0040-body" aria-labelledby="DS0040-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head ics " id="DS0040-Device Alarm">
+                <a href="/datasources/DS0040/#Device%20Alarm">
+                    Device Alarm
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head ics " id="DS0040-Process History/Live Data">
+                <a href="/datasources/DS0040/#Process%20History/Live%20Data">
+                    Process History/Live Data
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head ics " id="DS0040-Process/Event Alarm">
+                <a href="/datasources/DS0040/#Process/Event%20Alarm">
+                    Process/Event Alarm
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0021">
+                <a href="/datasources/DS0021/">
+                    Persona
+                </a>
+            <div class="expand-button collapsed" id="DS0021-header" data-toggle="collapse" data-target="#DS0021-body" aria-expanded="false" aria-controls="#DS0021-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0021-body" aria-labelledby="DS0021-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0021-Social Media">
+                <a href="/datasources/DS0021/#Social%20Media">
+                    Social Media
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0014">
+                <a href="/datasources/DS0014/">
+                    Pod
+                </a>
+            <div class="expand-button collapsed" id="DS0014-header" data-toggle="collapse" data-target="#DS0014-body" aria-expanded="false" aria-controls="#DS0014-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0014-body" aria-labelledby="DS0014-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0014-Pod Creation">
+                <a href="/datasources/DS0014/#Pod%20Creation">
+                    Pod Creation
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0014-Pod Enumeration">
+                <a href="/datasources/DS0014/#Pod%20Enumeration">
+                    Pod Enumeration
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="DS0014-Pod Metadata">
+                <a href="/datasources/DS0014/#Pod%20Metadata">
+                    Pod Metadata
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0014-Pod Modification">
+                <a href="/datasources/DS0014/#Pod%20Modification">
+                    Pod Modification
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise ics " id="DS0009">
+                <a href="/datasources/DS0009/">
+                    Process
+                </a>
+            <div class="expand-button collapsed" id="DS0009-header" data-toggle="collapse" data-target="#DS0009-body" aria-expanded="false" aria-controls="#DS0009-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0009-body" aria-labelledby="DS0009-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0009-OS API Execution">
+                <a href="/datasources/DS0009/#OS%20API%20Execution">
+                    OS API Execution
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0009-Process Access">
+                <a href="/datasources/DS0009/#Process%20Access">
+                    Process Access
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0009-Process Creation">
+                <a href="/datasources/DS0009/#Process%20Creation">
+                    Process Creation
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0009-Process Metadata">
+                <a href="/datasources/DS0009/#Process%20Metadata">
+                    Process Metadata
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0009-Process Modification">
+                <a href="/datasources/DS0009/#Process%20Modification">
+                    Process Modification
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0009-Process Termination">
+                <a href="/datasources/DS0009/#Process%20Termination">
+                    Process Termination
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise ics " id="DS0003">
+                <a href="/datasources/DS0003/">
+                    Scheduled Job
+                </a>
+            <div class="expand-button collapsed" id="DS0003-header" data-toggle="collapse" data-target="#DS0003-body" aria-expanded="false" aria-controls="#DS0003-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0003-body" aria-labelledby="DS0003-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0003-Scheduled Job Creation">
+                <a href="/datasources/DS0003/#Scheduled%20Job%20Creation">
+                    Scheduled Job Creation
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0003-Scheduled Job Metadata">
+                <a href="/datasources/DS0003/#Scheduled%20Job%20Metadata">
+                    Scheduled Job Metadata
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0003-Scheduled Job Modification">
+                <a href="/datasources/DS0003/#Scheduled%20Job%20Modification">
+                    Scheduled Job Modification
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise ics " id="DS0012">
+                <a href="/datasources/DS0012/">
+                    Script
+                </a>
+            <div class="expand-button collapsed" id="DS0012-header" data-toggle="collapse" data-target="#DS0012-body" aria-expanded="false" aria-controls="#DS0012-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0012-body" aria-labelledby="DS0012-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0012-Script Execution">
+                <a href="/datasources/DS0012/#Script%20Execution">
+                    Script Execution
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0013">
+                <a href="/datasources/DS0013/">
+                    Sensor Health
+                </a>
+            <div class="expand-button collapsed" id="DS0013-header" data-toggle="collapse" data-target="#DS0013-body" aria-expanded="false" aria-controls="#DS0013-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0013-body" aria-labelledby="DS0013-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0013-Host Status">
+                <a href="/datasources/DS0013/#Host%20Status">
+                    Host Status
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise ics " id="DS0019">
+                <a href="/datasources/DS0019/">
+                    Service
+                </a>
+            <div class="expand-button collapsed" id="DS0019-header" data-toggle="collapse" data-target="#DS0019-body" aria-expanded="false" aria-controls="#DS0019-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0019-body" aria-labelledby="DS0019-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0019-Service Creation">
+                <a href="/datasources/DS0019/#Service%20Creation">
+                    Service Creation
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0019-Service Metadata">
+                <a href="/datasources/DS0019/#Service%20Metadata">
+                    Service Metadata
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0019-Service Modification">
+                <a href="/datasources/DS0019/#Service%20Modification">
+                    Service Modification
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0020">
+                <a href="/datasources/DS0020/">
+                    Snapshot
+                </a>
+            <div class="expand-button collapsed" id="DS0020-header" data-toggle="collapse" data-target="#DS0020-body" aria-expanded="false" aria-controls="#DS0020-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0020-body" aria-labelledby="DS0020-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0020-Snapshot Creation">
+                <a href="/datasources/DS0020/#Snapshot%20Creation">
+                    Snapshot Creation
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0020-Snapshot Deletion">
+                <a href="/datasources/DS0020/#Snapshot%20Deletion">
+                    Snapshot Deletion
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0020-Snapshot Enumeration">
+                <a href="/datasources/DS0020/#Snapshot%20Enumeration">
+                    Snapshot Enumeration
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0020-Snapshot Metadata">
+                <a href="/datasources/DS0020/#Snapshot%20Metadata">
+                    Snapshot Metadata
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0020-Snapshot Modification">
+                <a href="/datasources/DS0020/#Snapshot%20Modification">
+                    Snapshot Modification
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise ics " id="DS0002">
+                <a href="/datasources/DS0002/">
+                    User Account
+                </a>
+            <div class="expand-button collapsed" id="DS0002-header" data-toggle="collapse" data-target="#DS0002-body" aria-expanded="false" aria-controls="#DS0002-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0002-body" aria-labelledby="DS0002-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0002-User Account Authentication">
+                <a href="/datasources/DS0002/#User%20Account%20Authentication">
+                    User Account Authentication
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0002-User Account Creation">
+                <a href="/datasources/DS0002/#User%20Account%20Creation">
+                    User Account Creation
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0002-User Account Deletion">
+                <a href="/datasources/DS0002/#User%20Account%20Deletion">
+                    User Account Deletion
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0002-User Account Metadata">
+                <a href="/datasources/DS0002/#User%20Account%20Metadata">
+                    User Account Metadata
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0002-User Account Modification">
+                <a href="/datasources/DS0002/#User%20Account%20Modification">
+                    User Account Modification
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0034">
+                <a href="/datasources/DS0034/">
+                    Volume
+                </a>
+            <div class="expand-button collapsed" id="DS0034-header" data-toggle="collapse" data-target="#DS0034-body" aria-expanded="false" aria-controls="#DS0034-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0034-body" aria-labelledby="DS0034-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0034-Volume Creation">
+                <a href="/datasources/DS0034/#Volume%20Creation">
+                    Volume Creation
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0034-Volume Deletion">
+                <a href="/datasources/DS0034/#Volume%20Deletion">
+                    Volume Deletion
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0034-Volume Enumeration">
+                <a href="/datasources/DS0034/#Volume%20Enumeration">
+                    Volume Enumeration
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0034-Volume Metadata">
+                <a href="/datasources/DS0034/#Volume%20Metadata">
+                    Volume Metadata
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0034-Volume Modification">
+                <a href="/datasources/DS0034/#Volume%20Modification">
+                    Volume Modification
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0006">
+                <a href="/datasources/DS0006/">
+                    Web Credential
+                </a>
+            <div class="expand-button collapsed" id="DS0006-header" data-toggle="collapse" data-target="#DS0006-body" aria-expanded="false" aria-controls="#DS0006-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0006-body" aria-labelledby="DS0006-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0006-Web Credential Creation">
+                <a href="/datasources/DS0006/#Web%20Credential%20Creation">
+                    Web Credential Creation
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0006-Web Credential Usage">
+                <a href="/datasources/DS0006/#Web%20Credential%20Usage">
+                    Web Credential Usage
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise ics " id="DS0024">
+                <a href="/datasources/DS0024/">
+                    Windows Registry
+                </a>
+            <div class="expand-button collapsed" id="DS0024-header" data-toggle="collapse" data-target="#DS0024-body" aria-expanded="false" aria-controls="#DS0024-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0024-body" aria-labelledby="DS0024-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0024-Windows Registry Key Access">
+                <a href="/datasources/DS0024/#Windows%20Registry%20Key%20Access">
+                    Windows Registry Key Access
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0024-Windows Registry Key Creation">
+                <a href="/datasources/DS0024/#Windows%20Registry%20Key%20Creation">
+                    Windows Registry Key Creation
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0024-Windows Registry Key Deletion">
+                <a href="/datasources/DS0024/#Windows%20Registry%20Key%20Deletion">
+                    Windows Registry Key Deletion
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise ics " id="DS0024-Windows Registry Key Modification">
+                <a href="/datasources/DS0024/#Windows%20Registry%20Key%20Modification">
+                    Windows Registry Key Modification
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  enterprise " id="DS0005">
+                <a href="/datasources/DS0005/">
+                    WMI
+                </a>
+            <div class="expand-button collapsed" id="DS0005-header" data-toggle="collapse" data-target="#DS0005-body" aria-expanded="false" aria-controls="#DS0005-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="DS0005-body" aria-labelledby="DS0005-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head enterprise " id="DS0005-WMI Creation">
+                <a href="/datasources/DS0005/#WMI%20Creation">
+                    WMI Creation
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+    </div>
+</div>
+ 
+    </div>
+    <div class="side-nav-mobile-view">
+        <div class="sidenav-wrapper">
+    <div class="heading" id="v-home-tab" aria-selected="false">DATA SOURCES</div>
+    <div class="sidenav-list">
+            
+
+<div class="sidenav">
+            <div class="sidenav-head active " id="0-0">
+                <a href="/datasources/">
+                    Overview
+                </a>
+            </div>
+</div>
+
+        
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  " id="062e86fbd60d43bca6ea4caaacb0be11">
+                <span>A-B</span>
+            <div class="expand-button collapsed" id="062e86fbd60d43bca6ea4caaacb0be11-header" data-toggle="collapse" data-target="#062e86fbd60d43bca6ea4caaacb0be11-body" aria-expanded="false" aria-controls="#062e86fbd60d43bca6ea4caaacb0be11-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="062e86fbd60d43bca6ea4caaacb0be11-body" aria-labelledby="062e86fbd60d43bca6ea4caaacb0be11-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="062e86fbd60d43bca6ea4caaacb0be11-eb1e1a5482ba4cda8f77f070a3d37fa0">
+                <a href="/datasources/DS0015/">
+                    Application Log
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="062e86fbd60d43bca6ea4caaacb0be11-4222c9b1c7194e5a9dc408308ebf40c3">
+                <a href="/datasources/DS0026/">
+                    Active Directory
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  " id="07a17fe2ac5a4ae388dfec4990578856">
+                <span>C-D</span>
+            <div class="expand-button collapsed" id="07a17fe2ac5a4ae388dfec4990578856-header" data-toggle="collapse" data-target="#07a17fe2ac5a4ae388dfec4990578856-body" aria-expanded="false" aria-controls="#07a17fe2ac5a4ae388dfec4990578856-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="07a17fe2ac5a4ae388dfec4990578856-body" aria-labelledby="07a17fe2ac5a4ae388dfec4990578856-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="07a17fe2ac5a4ae388dfec4990578856-560ef9b4dbd649908f54899fc26ca0e4">
+                <a href="/datasources/DS0017/">
+                    Command
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="07a17fe2ac5a4ae388dfec4990578856-5a3765acb2784b59ad320049543183cb">
+                <a href="/datasources/DS0038/">
+                    Domain Name
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="07a17fe2ac5a4ae388dfec4990578856-3aba40f6eeda4ca0afe25ad04882ea21">
+                <a href="/datasources/DS0032/">
+                    Container
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="07a17fe2ac5a4ae388dfec4990578856-df4c4542936c410d84e28451efc551c4">
+                <a href="/datasources/DS0027/">
+                    Driver
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="07a17fe2ac5a4ae388dfec4990578856-4722c4f524944ea9a0e7005d2c6eb948">
+                <a href="/datasources/DS0025/">
+                    Cloud Service
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="07a17fe2ac5a4ae388dfec4990578856-3457161614a44e3da9672abb35f5198a">
+                <a href="/datasources/DS0016/">
+                    Drive
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="07a17fe2ac5a4ae388dfec4990578856-ffeb75db84d74707b7d9cd8b8ecf66cf">
+                <a href="/datasources/DS0010/">
+                    Cloud Storage
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="07a17fe2ac5a4ae388dfec4990578856-d4b6d8f32c574ed28264e1b4aa2c4486">
+                <a href="/datasources/DS0031/">
+                    Cluster
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="07a17fe2ac5a4ae388dfec4990578856-c4723c5cca8f4fac92187609b4823d5c">
+                <a href="/datasources/DS0037/">
+                    Certificate
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  " id="ee607c07621f45689e77e0efadccaa66">
+                <span>E-F</span>
+            <div class="expand-button collapsed" id="ee607c07621f45689e77e0efadccaa66-header" data-toggle="collapse" data-target="#ee607c07621f45689e77e0efadccaa66-body" aria-expanded="false" aria-controls="#ee607c07621f45689e77e0efadccaa66-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="ee607c07621f45689e77e0efadccaa66-body" aria-labelledby="ee607c07621f45689e77e0efadccaa66-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="ee607c07621f45689e77e0efadccaa66-3c1841cd875949b18b6439dbbe5a4712">
+                <a href="/datasources/DS0022/">
+                    File
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="ee607c07621f45689e77e0efadccaa66-4d861955df1447cba3c761b3f6e1f4dc">
+                <a href="/datasources/DS0018/">
+                    Firewall
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="ee607c07621f45689e77e0efadccaa66-11d0f75cf8f64024b5722814b002f008">
+                <a href="/datasources/DS0001/">
+                    Firmware
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  " id="5225931e980c4412994cb5e0a6260557">
+                <span>G-H</span>
+            <div class="expand-button collapsed" id="5225931e980c4412994cb5e0a6260557-header" data-toggle="collapse" data-target="#5225931e980c4412994cb5e0a6260557-body" aria-expanded="false" aria-controls="#5225931e980c4412994cb5e0a6260557-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="5225931e980c4412994cb5e0a6260557-body" aria-labelledby="5225931e980c4412994cb5e0a6260557-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="5225931e980c4412994cb5e0a6260557-d29358c2a6ac4e25a3ddf150a54542b2">
+                <a href="/datasources/DS0036/">
+                    Group
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  " id="ffc36bf3027b440b9c536620885ed297">
+                <span>I-J</span>
+            <div class="expand-button collapsed" id="ffc36bf3027b440b9c536620885ed297-header" data-toggle="collapse" data-target="#ffc36bf3027b440b9c536620885ed297-body" aria-expanded="false" aria-controls="#ffc36bf3027b440b9c536620885ed297-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="ffc36bf3027b440b9c536620885ed297-body" aria-labelledby="ffc36bf3027b440b9c536620885ed297-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="ffc36bf3027b440b9c536620885ed297-1f7ff872efeb4f32ba7dad1f0f391201">
+                <a href="/datasources/DS0035/">
+                    Internet Scan
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="ffc36bf3027b440b9c536620885ed297-e8e6b6a0c6824414b66f9134044e2695">
+                <a href="/datasources/DS0030/">
+                    Instance
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="ffc36bf3027b440b9c536620885ed297-c35bb9b5184d46d9a0f84a4661f0b2dd">
+                <a href="/datasources/DS0007/">
+                    Image
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  " id="a3d7546c6f644312a438621701cb032e">
+                <span>K-L</span>
+            <div class="expand-button collapsed" id="a3d7546c6f644312a438621701cb032e-header" data-toggle="collapse" data-target="#a3d7546c6f644312a438621701cb032e-body" aria-expanded="false" aria-controls="#a3d7546c6f644312a438621701cb032e-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="a3d7546c6f644312a438621701cb032e-body" aria-labelledby="a3d7546c6f644312a438621701cb032e-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="a3d7546c6f644312a438621701cb032e-cfb9a2984c8e4e07b04a190e9e9d85c6">
+                <a href="/datasources/DS0028/">
+                    Logon Session
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="a3d7546c6f644312a438621701cb032e-8a774bf0d6f34da59504937a77ce6c3a">
+                <a href="/datasources/DS0008/">
+                    Kernel
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  " id="b4b22828639f4e5a8e5733ce8905a655">
+                <span>M-N</span>
+            <div class="expand-button collapsed" id="b4b22828639f4e5a8e5733ce8905a655-header" data-toggle="collapse" data-target="#b4b22828639f4e5a8e5733ce8905a655-body" aria-expanded="false" aria-controls="#b4b22828639f4e5a8e5733ce8905a655-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="b4b22828639f4e5a8e5733ce8905a655-body" aria-labelledby="b4b22828639f4e5a8e5733ce8905a655-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="b4b22828639f4e5a8e5733ce8905a655-b1fa379ada814316bbd2ab12bea49c77">
+                <a href="/datasources/DS0029/">
+                    Network Traffic
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="b4b22828639f4e5a8e5733ce8905a655-7edad4d46cea413b8d56edede70adf71">
+                <a href="/datasources/DS0011/">
+                    Module
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="b4b22828639f4e5a8e5733ce8905a655-00267f32476e477a82d69c205957c880">
+                <a href="/datasources/DS0004/">
+                    Malware Repository
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="b4b22828639f4e5a8e5733ce8905a655-6049a37669d84f5683634d97dab6d34c">
+                <a href="/datasources/DS0033/">
+                    Network Share
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="b4b22828639f4e5a8e5733ce8905a655-4eea2ab27c92459693d48160a836e126">
+                <a href="/datasources/DS0023/">
+                    Named Pipe
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  " id="82b6d0c5b9554f6ba35a235859dab26e">
+                <span>O-P</span>
+            <div class="expand-button collapsed" id="82b6d0c5b9554f6ba35a235859dab26e-header" data-toggle="collapse" data-target="#82b6d0c5b9554f6ba35a235859dab26e-body" aria-expanded="false" aria-controls="#82b6d0c5b9554f6ba35a235859dab26e-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="82b6d0c5b9554f6ba35a235859dab26e-body" aria-labelledby="82b6d0c5b9554f6ba35a235859dab26e-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="82b6d0c5b9554f6ba35a235859dab26e-0b48009caca94ec9bbf868d57f8afd77">
+                <a href="/datasources/DS0014/">
+                    Pod
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="82b6d0c5b9554f6ba35a235859dab26e-2aaebac02f99415ea4081a597a199357">
+                <a href="/datasources/DS0009/">
+                    Process
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="82b6d0c5b9554f6ba35a235859dab26e-42acfb13efbe4838853665c79a031c1e">
+                <a href="/datasources/DS0021/">
+                    Persona
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="82b6d0c5b9554f6ba35a235859dab26e-80719dfcedbc44769fe038d888a77a0e">
+                <a href="/datasources/DS0040/">
+                    Operational Databases
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  " id="10bc664d1ed048dbaf5331779a127103">
+                <span>Q-R</span>
+            <div class="expand-button collapsed" id="10bc664d1ed048dbaf5331779a127103-header" data-toggle="collapse" data-target="#10bc664d1ed048dbaf5331779a127103-body" aria-expanded="false" aria-controls="#10bc664d1ed048dbaf5331779a127103-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="10bc664d1ed048dbaf5331779a127103-body" aria-labelledby="10bc664d1ed048dbaf5331779a127103-header">
+                    
+
+<div class="sidenav">
+            <span>No Data Sources</span>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  " id="442e536bd7dc4060ae1210f5e9170250">
+                <span>S-T</span>
+            <div class="expand-button collapsed" id="442e536bd7dc4060ae1210f5e9170250-header" data-toggle="collapse" data-target="#442e536bd7dc4060ae1210f5e9170250-body" aria-expanded="false" aria-controls="#442e536bd7dc4060ae1210f5e9170250-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="442e536bd7dc4060ae1210f5e9170250-body" aria-labelledby="442e536bd7dc4060ae1210f5e9170250-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="442e536bd7dc4060ae1210f5e9170250-ae32aad4b30c412baad7c86a323aaa5c">
+                <a href="/datasources/DS0012/">
+                    Script
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="442e536bd7dc4060ae1210f5e9170250-d2ffc491caa34c4c9d248009a7196658">
+                <a href="/datasources/DS0003/">
+                    Scheduled Job
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="442e536bd7dc4060ae1210f5e9170250-3bfa943634f7496ba99109803f6e533f">
+                <a href="/datasources/DS0019/">
+                    Service
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="442e536bd7dc4060ae1210f5e9170250-bac8b33745964762827b1c93dc3c3e63">
+                <a href="/datasources/DS0020/">
+                    Snapshot
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="442e536bd7dc4060ae1210f5e9170250-19e06470434d4ba29b6aac0e6aceca73">
+                <a href="/datasources/DS0013/">
+                    Sensor Health
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  " id="d897b42f1e8a4d8f89def2d1f56b610e">
+                <span>U-V</span>
+            <div class="expand-button collapsed" id="d897b42f1e8a4d8f89def2d1f56b610e-header" data-toggle="collapse" data-target="#d897b42f1e8a4d8f89def2d1f56b610e-body" aria-expanded="false" aria-controls="#d897b42f1e8a4d8f89def2d1f56b610e-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="d897b42f1e8a4d8f89def2d1f56b610e-body" aria-labelledby="d897b42f1e8a4d8f89def2d1f56b610e-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="d897b42f1e8a4d8f89def2d1f56b610e-96bafac657fb4648888887eb9d842752">
+                <a href="/datasources/DS0002/">
+                    User Account
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="d897b42f1e8a4d8f89def2d1f56b610e-fee448a6ca794c88ba162d20acc8e156">
+                <a href="/datasources/DS0034/">
+                    Volume
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  " id="a7e4e2853e5f49e2a309820fc302475e">
+                <span>W-X</span>
+            <div class="expand-button collapsed" id="a7e4e2853e5f49e2a309820fc302475e-header" data-toggle="collapse" data-target="#a7e4e2853e5f49e2a309820fc302475e-body" aria-expanded="false" aria-controls="#a7e4e2853e5f49e2a309820fc302475e-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="a7e4e2853e5f49e2a309820fc302475e-body" aria-labelledby="a7e4e2853e5f49e2a309820fc302475e-header">
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="a7e4e2853e5f49e2a309820fc302475e-324245741ab5470584b897ecba59d95d">
+                <a href="/datasources/DS0024/">
+                    Windows Registry
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="a7e4e2853e5f49e2a309820fc302475e-8bc564b6550542c2a47be6a4c5b99b38">
+                <a href="/datasources/DS0006/">
+                    Web Credential
+                </a>
+            </div>
+</div>
+
+                    
+
+<div class="sidenav">
+            <div class="sidenav-head " id="a7e4e2853e5f49e2a309820fc302475e-a9115fd156ff40b8b6d92e14b4e5444f">
+                <a href="/datasources/DS0005/">
+                    WMI
+                </a>
+            </div>
+</div>
+
+        </div>
+</div>
+
+            
+
+<div class="sidenav">
+        <div class="sidenav-head  " id="04e5cdec22ab439cba54da953f34b613">
+                <span>Y-Z</span>
+            <div class="expand-button collapsed" id="04e5cdec22ab439cba54da953f34b613-header" data-toggle="collapse" data-target="#04e5cdec22ab439cba54da953f34b613-body" aria-expanded="false" aria-controls="#04e5cdec22ab439cba54da953f34b613-body"></div>
+
+        </div>
+        <div class="sidenav-body collapse" id="04e5cdec22ab439cba54da953f34b613-body" aria-labelledby="04e5cdec22ab439cba54da953f34b613-header">
+                    
+
+<div class="sidenav">
+            <span>No Data Sources</span>
+</div>
+
+        </div>
+</div>
+
+    </div>
+</div>
+ 
+    </div>
+<!--start-indexing-for-search-->
+    </div>
+
+    
+     
+    <div class="tab-content col-xl-9 col-lg-9 col-md-8 pt-4" id="v-tabContent">
+        <div class="tab-pane fade show active" id="v-attckmatrix" role="tabpanel" aria-labelledby="v-attckmatrix-tab">
+    
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li class="breadcrumb-item">Data Sources</li>
+    </ol>
+    <div class="tab-pane fade show active" id="v-" role="tabpanel" aria-labelledby="v--tab"></div>
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="jumbotron jumbotron-fluid">
+                <div class="container-fluid">
+                    <div class="overflow-x-auto">
+                        <h1>
+                            Data Sources
+                        </h1>
+                        <p>Data sources represent the various subjects/topics of information that can be collected by sensors/logs. Data sources also include data components, which identify specific properties/values of a data source relevant to detecting a given ATT&CK technique or sub-technique.</p>
+                        <h6 class="table-object-count">Data Sources: 39</h6>
+                        <table class="table table-bordered table-alternate mt-2">
+                            <thead>
+                                <tr>
+                                    <th scope="col">ID</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0026"> DS0026 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0026"> Active Directory </a>
+                                        </td>
+                                        <td>
+                                                    <p>A database and set of services that allows administrators to manage permissions, access to network resources, and stored data objects (user, group, application, or devices)</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0015"> DS0015 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0015"> Application Log </a>
+                                        </td>
+                                        <td>
+                                                    <p>Events collected by third-party services such as mail servers, web applications, or other appliances (not by the native OS or platform)</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0037"> DS0037 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0037"> Certificate </a>
+                                        </td>
+                                        <td>
+                                                    <p>A digital document, which highlights information such as the owner's identity, used to instill trust in public keys used while encrypting network communications</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0025"> DS0025 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0025"> Cloud Service </a>
+                                        </td>
+                                        <td>
+                                                    <p>Infrastructure, platforms, or software that are hosted on-premise or by third-party providers, made available to users through network connections and/or APIs</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0010"> DS0010 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0010"> Cloud Storage </a>
+                                        </td>
+                                        <td>
+                                                    <p>Data object storage infrastructure hosted on-premise or by third-party providers, made available to users through network connections and/or APIs</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0031"> DS0031 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0031"> Cluster </a>
+                                        </td>
+                                        <td>
+                                                    <p>A set of containerized computing resources that are managed together but have separate nodes to execute various tasks and/or applications</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0017"> DS0017 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0017"> Command </a>
+                                        </td>
+                                        <td>
+                                                    <p>A directive given to a computer program, acting as an interpreter of some kind, in order to perform a specific task</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0032"> DS0032 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0032"> Container </a>
+                                        </td>
+                                        <td>
+                                                    <p>A standard unit of virtualized software that packages up code and all its dependencies so the application runs quickly and reliably from one computing environment to another</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0038"> DS0038 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0038"> Domain Name </a>
+                                        </td>
+                                        <td>
+                                                    <p>Information obtained (commonly through registration or activity logs) regarding one or more IP addresses registered with human readable names (ex: mitre.org)</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0016"> DS0016 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0016"> Drive </a>
+                                        </td>
+                                        <td>
+                                                    <p>A non-volatile data storage device (hard drive, floppy disk, USB flash drive) with at least one formatted partition, typically mounted to the file system and/or assigned a drive letter</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0027"> DS0027 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0027"> Driver </a>
+                                        </td>
+                                        <td>
+                                                    <p>A computer program that operates or controls a particular type of device that is attached to a computer. Provides a software interface to hardware devices, enabling operating systems and other computer programs to access hardware functions without needing to know precise details about the hardware being used</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0022"> DS0022 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0022"> File </a>
+                                        </td>
+                                        <td>
+                                                    <p>A computer resource object, managed by the I/O system, for storing data (such as images, text, videos, computer programs, or any wide variety of other media).</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0018"> DS0018 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0018"> Firewall </a>
+                                        </td>
+                                        <td>
+                                                    <p>A network security system, running locally on an endpoint or remotely as a service (ex: cloud environment), that monitors and controls incoming/outgoing network traffic based on predefined rules</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0001"> DS0001 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0001"> Firmware </a>
+                                        </td>
+                                        <td>
+                                                    <p>Computer software that provides low-level control for the hardware and device(s) of a host, such as BIOS or UEFI/EFI</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0036"> DS0036 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0036"> Group </a>
+                                        </td>
+                                        <td>
+                                                    <p>A collection of multiple user accounts that share the same access rights to the computer and/or network resources and have common security rights</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0007"> DS0007 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0007"> Image </a>
+                                        </td>
+                                        <td>
+                                                    <p>A single file used to deploy a virtual machine/bootable disk into an on-premise or third-party cloud environment</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0030"> DS0030 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0030"> Instance </a>
+                                        </td>
+                                        <td>
+                                                    <p>A virtual server environment which runs workloads, hosted on-premise or by third-party cloud providers</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0035"> DS0035 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0035"> Internet Scan </a>
+                                        </td>
+                                        <td>
+                                                    <p>Information obtained (commonly via active network traffic probes or web crawling) regarding various types of resources and servers connected to the public Internet</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0008"> DS0008 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0008"> Kernel </a>
+                                        </td>
+                                        <td>
+                                                    <p>A computer program, at the core of a computer OS, that resides in memory and facilitates interactions between hardware and software components</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0028"> DS0028 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0028"> Logon Session </a>
+                                        </td>
+                                        <td>
+                                                    <p>Logon occurring on a system or resource (local, domain, or cloud) to which a user/device is gaining access after successful authentication and authorizaton</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0004"> DS0004 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0004"> Malware Repository </a>
+                                        </td>
+                                        <td>
+                                                    <p>Information obtained (via shared or submitted samples) regarding malicious software (droppers, backdoors, etc.) used by adversaries</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0011"> DS0011 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0011"> Module </a>
+                                        </td>
+                                        <td>
+                                                    <p>Executable files consisting of one or more shared classes and interfaces, such as portable executable (PE) format binaries/dynamic link libraries (DLL), executable and linkable format (ELF) binaries/shared libraries, and Mach-O format binaries/shared libraries</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0023"> DS0023 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0023"> Named Pipe </a>
+                                        </td>
+                                        <td>
+                                                    <p>Mechanisms that allow inter-process communication locally or over the network. A named pipe is usually found as a file and processes attach to it</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0033"> DS0033 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0033"> Network Share </a>
+                                        </td>
+                                        <td>
+                                                    <p>A storage resource (typically a folder or drive) made available from one host to others using network protocols, such as Server Message Block (SMB) or Network File System (NFS)</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0029"> DS0029 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0029"> Network Traffic </a>
+                                        </td>
+                                        <td>
+                                                    <p>Data transmitted across a network (ex: Web, DNS, Mail, File, etc.), that is either summarized (ex: Netflow) and/or captured as raw data in an analyzable format (ex: PCAP)</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0040"> DS0040 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0040"> Operational Databases </a>
+                                        </td>
+                                        <td>
+                                                    <p>Operational databases contain information about the status of the operational process and associated devices, including any measurements, events, history, or alarms that have occurred</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0021"> DS0021 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0021"> Persona </a>
+                                        </td>
+                                        <td>
+                                                    <p>A malicious online profile representing a user commonly used by adversaries to social engineer or otherwise target victims</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0014"> DS0014 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0014"> Pod </a>
+                                        </td>
+                                        <td>
+                                                    <p>A single unit of shared resources within a cluster, comprised of one or more containers</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0009"> DS0009 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0009"> Process </a>
+                                        </td>
+                                        <td>
+                                                    <p>Instances of computer programs that are being executed by at least one thread. Processes have memory space for process executables, loaded modules (DLLs or shared libraries), and allocated memory regions containing everything from user input to application-specific data structures</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0003"> DS0003 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0003"> Scheduled Job </a>
+                                        </td>
+                                        <td>
+                                                    <p>Automated tasks that can be executed at a specific time or on a recurring schedule running in the background (ex: Cron daemon, task scheduler, BITS)</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0012"> DS0012 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0012"> Script </a>
+                                        </td>
+                                        <td>
+                                                    <p>A file or stream containing a list of commands, allowing them to be launched in sequence</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0013"> DS0013 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0013"> Sensor Health </a>
+                                        </td>
+                                        <td>
+                                                    <p>Information from host telemetry providing insights about system status, errors, or other notable functional activity</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0019"> DS0019 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0019"> Service </a>
+                                        </td>
+                                        <td>
+                                                    <p>A computer process that is configured to execute continuously in the background and perform system tasks, in some cases before any user has logged in</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0020"> DS0020 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0020"> Snapshot </a>
+                                        </td>
+                                        <td>
+                                                    <p>A point-in-time copy of cloud volumes (files, settings, etc.) that can be created and/or deployed in cloud environments</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0002"> DS0002 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0002"> User Account </a>
+                                        </td>
+                                        <td>
+                                                    <p>A profile representing a user, device, service, or application used to authenticate and access resources</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0034"> DS0034 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0034"> Volume </a>
+                                        </td>
+                                        <td>
+                                                    <p>Block object storage hosted on-premise or by third-party providers, typically made available to resources as virtualized hard drives</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0006"> DS0006 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0006"> Web Credential </a>
+                                        </td>
+                                        <td>
+                                                    <p>Credential material, such as session cookies or tokens, used to authenticate to web applications and services</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0024"> DS0024 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0024"> Windows Registry </a>
+                                        </td>
+                                        <td>
+                                                    <p>A Windows OS hierarchical database that stores much of the information and settings for software programs, hardware devices, user preferences, and operating-system configurations</p>
+                                            
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <a href="/datasources/DS0005"> DS0005 </a>
+                                        </td>
+                                        <td>
+                                            <a href="/datasources/DS0005"> WMI </a>
+                                        </td>
+                                        <td>
+                                                    <p>The infrastructure for management data and operations that enables local and remote management of Windows personal computers and servers</p>
+                                            
+                                        </td>
+                                    </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+        </div>
+    </div>
+
+            <!--stop-indexing-for-search-->
+            <!-- search overlay for entire page -- not displayed inline -->
+            <div class="overlay search" id="search-overlay" style="display: none;">
+    <div class="overlay-inner">
+        <!-- text input for searching -->
+        <div class="search-header">
+            <div class="search-input">
+                <input type="text" id="search-input" placeholder="search">
+            </div>
+            <div class="search-icons">
+                <div class="search-parsing-icon spinner-border" style="display: none" id="search-parsing-icon"></div>
+                <div class="close-search-icon" id="close-search-icon">&times;</div>
+            </div>
+        </div>
+        <!-- results and controls for loading more results -->
+        <div id="search-body" class="search-body">
+            <div class="results" id="search-results">
+                <!-- content will be appended here on search -->
+            </div>
+            <div id="load-more-results" class="load-more-results">
+                <button class="btn btn-default" id="load-more-results-button">load more results</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+        </div>
+        <div class="row flex-grow-0 flex-shrink-1">
+            <!-- footer elements -->
+            <footer class="col footer p-3">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-4 col-sm-4 col-md-3">  
+                            <div class="footer-center-responsive my-auto">
+                                <a href="https://www.mitre.org" target="_blank" rel="noopener" aria-label="MITRE">
+                                    <img src="/theme/images/mitrelogowhiteontrans.gif" class="mitre-logo-wtrans">
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-2 col-sm-2 footer-responsive-break"></div>
+                        <div class="col-6 col-sm-6 text-center">  
+                            <p>
+                                 © 2015-2022, The MITRE Corporation. MITRE ATT&CK and ATT&CK are registered trademarks of The MITRE Corporation.
+                            </p>
+                            <div class="row">
+                    
+                                <div class="col text-right">
+                                    <small>
+                                        <a href="/resources/privacy" class="footer-link">Privacy Policy</a>
+                                    </small>
+                                </div>
+                                <div class="col text-center">
+                                    <small>
+                                        <a href="/resources/terms-of-use" class="footer-link">Terms of Use</a>
+                                    </small>
+                                </div>
+                                <div class="col  text-left ">
+                                    <small>
+                                        <a href="/resources/changelog.html" class="footer-link" data-toggle="tooltip" data-placement="top" data-html="true" title="ATT&amp;CK content v11.3&#013;Website  v3.6.5">ATT&CK v11.3</a>
+                                    </small>
+                                </div>
+            
+                            </div>
+                        </div>
+                        <div class="w-100 p-2 footer-responsive-break"></div>
+                            <div class="col">
+                                <div class="footer-float-right-responsive-brand">
+                                    <div class="mb-1">
+                                        <a href="https://twitter.com/MITREattack" class="btn btn-primary w-100">
+                                            <!-- <i class="fa fa-twitter"></i> -->
+                                            <img src="/theme/images/twitter.png" class="mr-1 twitter-icon">
+                                            <b>@MITREattack</b>
+                                        </a>
+                                    </div>
+                                    <div class="">
+                                        <a href="/contact" class="btn btn-primary w-100">
+                                            Contact
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+
+<!--stopindex-->
+
+</div>
+        <!--SCRIPTS-->
+    <script src="/theme/scripts/jquery-3.5.1.min.js"></script>
+    <script src="/theme/scripts/popper.min.js"></script>
+    <script src="/theme/scripts/bootstrap-select.min.js"></script>
+    <script src="/theme/scripts/bootstrap.bundle.min.js"></script>
+    <script src="/theme/scripts/site.js?8317"></script>
+    <script src="/theme/scripts/flexsearch.es5.js"></script> 
+    <script src="/theme/scripts/localforage.min.js"></script>
+    <script src="/theme/scripts/settings.js?8785"></script>
+    <script src="/theme/scripts/search_babelized.js"></script>
+
+    <!--SCRIPTS-->
+    <script src="/theme/scripts/filter/filter.js?266""></script>
+    <script src="/theme/scripts/navigation.js"></script>
+</body>
+</html>
