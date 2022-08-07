@@ -1,4 +1,8 @@
+use select::document::Document;
+
 use crate::{attack::AttackService, error, WebFetch};
+
+use super::{Row, Table};
 
 const ATTCK_SOFTWARE_URL: &'static str = "https://attack.mitre.org/software/";
 
@@ -10,32 +14,30 @@ pub struct Software {
     pub description: String
 }
 
-impl From<&Vec<String>> for Software {
-    fn from(software_row: &Vec<String>) -> Self {
-        let mut software = Self::default();
+impl From<&Row> for Software {
+    fn from(row: &Row) -> Self {
+        let mut software = Software::default();
 
-        if let Some(id) = software_row.get(0) {
+        if let Some(id) = row.cols.get(0) {
             software.id = id.to_string();
         }
 
-        if let Some(name) = software_row.get(1) {
+        if let Some(name) = row.cols.get(1) {
             software.name = name.to_string();
         }
 
-        if let Some(assoc_software) = software_row.get(2) {
-            software.assoc_software = Some(assoc_software.split(",").map(String::from).collect());
+        if let Some(assoc_software) = row.cols.get(2) {
+            software.assoc_software = Some(assoc_software.split(", ").map(String::from).collect())
         }
 
-        if let Some(desc) = software_row.get(3) {
+        if let Some(desc) = row.cols.get(3) {
             software.description = desc.to_string();
 
             if software.description.contains("\n") {
-                let desc: Vec<String> = software
-                    .description
-                    .split("\n")
+                software.description = software.description.split("\n")
                     .map(|str_slice| str_slice.trim().to_string())
-                    .collect();
-                    software.description = desc.join(" ");
+                    .collect::<Vec<String>>()
+                    .join(" ");
             }
         }
 
@@ -43,15 +45,22 @@ impl From<&Vec<String>> for Software {
     }
 }
 
+impl From<&Table> for Vec<Software> {
+    fn from(table: &Table) -> Self {
+        return table.rows.iter().map(Software::from).collect::<Vec<Software>>();
+    }
+}
+
 impl<S: WebFetch> AttackService<S> {
     pub fn get_software(&self) -> Result<Vec<Software>, error::Error> {
         let fetched_response = self.req_client.fetch(ATTCK_SOFTWARE_URL)?;
-        let data = self.scrape_tables(fetched_response.as_str());
-        
+        let document = Document::from(fetched_response.as_str());
+        let data = self.scrape_tables(&document);
+
         if let Some(table) = data.get(0) {
-            return Ok(table.into_iter().map(Software::from).collect::<Vec<Software>>());
+            return Ok(table.into());
         }
-        
+
         return Ok(Vec::default());
     }
 }

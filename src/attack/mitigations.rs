@@ -1,4 +1,8 @@
+use select::document::Document;
+
 use crate::{attack::AttackService, error, WebFetch};
+
+use super::{Row, Table};
 
 pub enum Type {
     ENTERPRISE,
@@ -24,19 +28,19 @@ pub struct Mitigation {
     pub description: String,
 }
 
-impl From<&Vec<String>> for Mitigation {
-    fn from(mitigation_row: &Vec<String>) -> Self {
+impl From<&Row> for Mitigation {
+    fn from(row: &Row) -> Self {
         let mut mitigation = Self::default();
 
-        if let Some(id) = mitigation_row.get(0) {
+        if let Some(id) = row.cols.get(0) {
             mitigation.id = id.to_string();
         }
 
-        if let Some(name) = mitigation_row.get(1) {
+        if let Some(name) = row.cols.get(1) {
             mitigation.name = name.to_string();
         }
 
-        if let Some(desc) = mitigation_row.get(2) {
+        if let Some(desc) = row.cols.get(2) {
             mitigation.description = desc.to_string();
 
             if mitigation.description.contains("\n") {
@@ -53,14 +57,21 @@ impl From<&Vec<String>> for Mitigation {
     }
 }
 
+impl From<&Table> for Vec<Mitigation> {
+    fn from(table: &Table) -> Self {
+        return table.rows.iter().map(Mitigation::from).collect();
+    }
+}
+
 impl<S: WebFetch> AttackService<S> {
     pub fn get_mitigations(self, mitigation_type: Type) -> Result<Vec<Mitigation>, error::Error> {
 
         let fetched_response = self.req_client.fetch(mitigation_type.into())?;
-        let data = self.scrape_tables(fetched_response.as_str());
+        let document = Document::from(fetched_response.as_str());
+        let data = self.scrape_tables(&document);
         
         if let Some(table) = data.get(0) {
-            return Ok(table.into_iter().map(Mitigation::from).collect::<Vec<Mitigation>>());
+            return Ok(table.into());
         }
         
         return Ok(Vec::default());

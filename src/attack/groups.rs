@@ -1,4 +1,8 @@
+use select::document::Document;
+
 use crate::{attack::AttackService, error, WebFetch};
+
+use super::{Row, Table};
 
 const ATTCK_GROUPS_URL: &'static str = "https://attack.mitre.org/groups/";
 
@@ -10,23 +14,23 @@ pub struct Group {
     pub description: String
 }
 
-impl From<&Vec<String>> for Group {
-    fn from(group_row: &Vec<String>) -> Self {
+impl From<&Row> for Group {
+    fn from(row: &Row) -> Self {
         let mut group = Self::default();
 
-        if let Some(id) = group_row.get(0) {
+        if let Some(id) = row.cols.get(0) {
             group.id = id.to_string();
         }
 
-        if let Some(name) = group_row.get(1) {
+        if let Some(name) = row.cols.get(1) {
             group.name = name.to_string();
         }
 
-        if let Some(assoc_groups) = group_row.get(2) {
+        if let Some(assoc_groups) = row.cols.get(2) {
             group.assoc_groups = Some(assoc_groups.split(",").map(String::from).collect());
         }
 
-        if let Some(desc) = group_row.get(3) {
+        if let Some(desc) = row.cols.get(3) {
             group.description = desc.to_string();
 
             if group.description.contains("\n") {
@@ -43,13 +47,20 @@ impl From<&Vec<String>> for Group {
     }
 }
 
+impl From<&Table> for Vec<Group> {
+    fn from(table: &Table) -> Self {
+        return table.rows.iter().map(Group::from).collect();
+    }
+}
+
 impl<S: WebFetch> AttackService<S> {
     pub fn get_groups(self) -> Result<Vec<Group>, error::Error> {
         let fetched_response = self.req_client.fetch(ATTCK_GROUPS_URL)?;
-        let data = self.scrape_tables(fetched_response.as_str());
+        let document = Document::from(fetched_response.as_str());
+        let data = self.scrape_tables(&document);
         
         if let Some(table) = data.get(0) {
-            return Ok(table.into_iter().map(Group::from).collect::<Vec<Group>>());
+            return Ok(table.into());
         }
         
         return Ok(Vec::default());

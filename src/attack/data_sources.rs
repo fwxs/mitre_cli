@@ -1,4 +1,8 @@
+use select::document::Document;
+
 use crate::{attack::AttackService, error, WebFetch};
+
+use super::{Table, Row};
 
 const ATTCK_DATA_SOURCES_URL: &'static str = "https://attack.mitre.org/datasources/";
 
@@ -9,19 +13,19 @@ pub struct DataSource {
     pub description: String
 }
 
-impl From<&Vec<String>> for DataSource {
-    fn from(data_source_row: &Vec<String>) -> Self {
+impl From<&Row> for DataSource {
+    fn from(row: &Row) -> Self {
         let mut data_source = Self::default();
 
-        if let Some(id) = data_source_row.get(0) {
+        if let Some(id) = row.cols.get(0) {
             data_source.id = id.to_string();
         }
 
-        if let Some(name) = data_source_row.get(1) {
+        if let Some(name) = row.cols.get(1) {
             data_source.name = name.to_string();
         }
 
-        if let Some(desc) = data_source_row.get(2) {
+        if let Some(desc) = row.cols.get(2) {
             data_source.description = desc.to_string();
 
             if data_source.description.contains("\n") {
@@ -38,13 +42,20 @@ impl From<&Vec<String>> for DataSource {
     }
 }
 
+impl From<&Table> for Vec<DataSource> {
+    fn from(table: &Table) -> Self {
+        return table.rows.iter().map(DataSource::from).collect();
+    }
+}
+
 impl<S: WebFetch> AttackService<S> {
     pub fn get_data_sources(self) -> Result<Vec<DataSource>, error::Error> {
         let fetched_response = self.req_client.fetch(ATTCK_DATA_SOURCES_URL)?;
-        let data = self.scrape_tables(fetched_response.as_str());
+        let document = Document::from(fetched_response.as_str());
+        let data = self.scrape_tables(&document);
         
         if let Some(table) = data.get(0) {
-            return Ok(table.into_iter().map(DataSource::from).collect::<Vec<DataSource>>());
+            return Ok(table.into());
         }
         
         return Ok(Vec::default());

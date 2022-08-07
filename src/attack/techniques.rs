@@ -1,12 +1,16 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use select::document::Document;
+
 use crate::{attack::AttackService, error, WebFetch};
+
+use super::{Row, Table};
 
 pub enum Type {
     ENTERPRISE,
     MOBILE,
-    ICS
+    ICS,
 }
 
 impl Into<&'static str> for Type {
@@ -14,7 +18,7 @@ impl Into<&'static str> for Type {
         match self {
             Self::ENTERPRISE => "https://attack.mitre.org/techniques/enterprise/",
             Self::MOBILE => "https://attack.mitre.org/techniques/mobile/",
-            Self::ICS => "https://attack.mitre.org/techniques/ics/"
+            Self::ICS => "https://attack.mitre.org/techniques/ics/",
         }
     }
 }
@@ -26,28 +30,28 @@ pub struct SubTechnique {
     pub description: String,
 }
 
-impl From<&Vec<String>> for SubTechnique {
-    fn from(sub_technique_row: &Vec<String>) -> Self {
-        let mut sub_technique = Self::default();
+impl From<&Row> for SubTechnique {
+    fn from(row: &Row) -> Self {
+        let mut sub_technique = SubTechnique::default();
 
-        if let Some(id) = sub_technique_row.get(0) {
+        if let Some(id) = row.cols.get(1) {
             sub_technique.id = id.to_string();
         }
 
-        if let Some(name) = sub_technique_row.get(1) {
+        if let Some(name) = row.cols.get(2) {
             sub_technique.name = name.to_string();
         }
 
-        if let Some(desc) = sub_technique_row.get(2) {
+        if let Some(desc) = row.cols.get(3) {
             sub_technique.description = desc.to_string();
 
             if sub_technique.description.contains("\n") {
-                let desc: Vec<String> = sub_technique
+                sub_technique.description = sub_technique
                     .description
                     .split("\n")
                     .map(|str_slice| str_slice.trim().to_string())
-                    .collect();
-                sub_technique.description = desc.join(" ");
+                    .collect::<Vec<String>>()
+                    .join("\n");
             }
         }
 
@@ -73,28 +77,28 @@ impl Technique {
     }
 }
 
-impl From<&Vec<String>> for Technique {
-    fn from(technique_row: &Vec<String>) -> Self {
-        let mut technique = Self::default();
+impl From<&Row> for Technique {
+    fn from(row: &Row) -> Self {
+        let mut technique = Technique::default();
 
-        if let Some(id) = technique_row.get(0) {
+        if let Some(id) = row.cols.get(0) {
             technique.id = id.to_string();
         }
 
-        if let Some(name) = technique_row.get(1) {
+        if let Some(name) = row.cols.get(1) {
             technique.name = name.to_string();
         }
 
-        if let Some(desc) = technique_row.get(2) {
+        if let Some(desc) = row.cols.get(2) {
             technique.description = desc.to_string();
 
             if technique.description.contains("\n") {
-                let desc: Vec<String> = technique
+                technique.description = technique
                     .description
                     .split("\n")
                     .map(|str_slice| str_slice.trim().to_string())
-                    .collect();
-                technique.description = desc.join(" ");
+                    .collect::<Vec<String>>()
+                    .join("\n");
             }
         }
 
@@ -102,28 +106,40 @@ impl From<&Vec<String>> for Technique {
     }
 }
 
-impl<S: WebFetch> AttackService<S> {
-    pub fn get_techniques(&self, technique_type: Type) -> Result<Vec<Rc<RefCell<Technique>>>, error::Error> {
+impl From<&Table> for Vec<Technique> {
+    fn from(table: &Table) -> Self {
         let mut retrieved_techniques: Vec<Rc<RefCell<Technique>>> = Vec::new();
+        let mut technique: Rc<RefCell<Technique>> = Rc::default();
 
-        let fetched_response = self.req_client.fetch(technique_type.into())?;
-        let data = self.scrape_tables(fetched_response.as_str());
-
-        if let Some(table) = data.get(0) {
-            let mut technique: Rc<RefCell<Technique>> = Rc::default();
-
-            for row in table {
-                if !row[0].starts_with(".") {
-                    technique = Rc::new(RefCell::new(Technique::from(row)));
-                    retrieved_techniques.push(Rc::clone(&technique));
-                }
-                else {
-                    technique.borrow_mut().add_subtechnique(SubTechnique::from(row));
-                }
+        for row in table.rows.iter() {
+            if !row.cols[0].is_empty() {
+                technique = Rc::new(RefCell::new(Technique::from(row)));
+                retrieved_techniques.push(Rc::clone(&technique));
+            } else {
+                technique
+                    .borrow_mut()
+                    .add_subtechnique(SubTechnique::from(row));
             }
         }
 
-        return Ok(retrieved_techniques);
+        return retrieved_techniques
+            .iter()
+            .map(|technique| technique.take())
+            .collect();
+    }
+}
+
+impl<S: WebFetch> AttackService<S> {
+    pub fn get_techniques(&self, technique_type: Type) -> Result<Vec<Technique>, error::Error> {
+        let fetched_response = self.req_client.fetch(technique_type.into())?;
+        let document = Document::from(fetched_response.as_str());
+        let data = self.scrape_tables(&document);
+
+        if let Some(table) = data.get(0) {
+            return Ok(table.into());
+        }
+
+        return Ok(Vec::default());
     }
 }
 
@@ -142,10 +158,12 @@ mod tests {
 
     #[test]
     fn test_fetch_enterprise_techniques() -> Result<(), error::Error> {
-        let fake_reqwest = FakeHttpReqwest::default()
-            .set_success_response(include_str!("html/attck/techniques/enterprise.html").to_string());
+        let fake_reqwest = FakeHttpReqwest::default().set_success_response(
+            include_str!("html/attck/techniques/enterprise.html").to_string(),
+        );
 
-        let retrieved_techniques = AttackService::new(fake_reqwest).get_techniques(Type::ENTERPRISE)?;
+        let retrieved_techniques =
+            AttackService::new(fake_reqwest).get_techniques(Type::ENTERPRISE)?;
 
         assert_eq!(retrieved_techniques.len(), SCRAPED_ENTERPRISE_ROWS);
 
@@ -154,16 +172,22 @@ mod tests {
 
     #[test]
     fn test_fetch_enterprise_subtechniques() -> Result<(), error::Error> {
-        let fake_reqwest = FakeHttpReqwest::default()
-            .set_success_response(include_str!("html/attck/techniques/enterprise.html").to_string());
+        let fake_reqwest = FakeHttpReqwest::default().set_success_response(
+            include_str!("html/attck/techniques/enterprise.html").to_string(),
+        );
 
-        let fetched_sub_techniques = AttackService::new(fake_reqwest).get_techniques(Type::ENTERPRISE)?.iter()
-            .filter(|technique| technique.borrow().sub_techniques.is_some())
-            .map(|technique| technique.borrow().sub_techniques.as_ref().unwrap().len())
+        let fetched_sub_techniques = AttackService::new(fake_reqwest)
+            .get_techniques(Type::ENTERPRISE)?
+            .iter()
+            .filter(|technique| technique.sub_techniques.is_some())
+            .map(|technique| technique.sub_techniques.as_ref().unwrap().len())
             .reduce(|accum, len| accum + len)
             .unwrap();
-        
-        assert_eq!(fetched_sub_techniques, SCRAPED_SUB_TECHINQUES_ENTERPRISE_ROWS);
+
+        assert_eq!(
+            fetched_sub_techniques,
+            SCRAPED_SUB_TECHINQUES_ENTERPRISE_ROWS
+        );
 
         Ok(())
     }
@@ -185,12 +209,14 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/techniques/mobile.html").to_string());
 
-        let fetched_sub_techniques = AttackService::new(fake_reqwest).get_techniques(Type::MOBILE)?.iter()
-            .filter(|technique| technique.borrow().sub_techniques.is_some())
-            .map(|technique| technique.borrow().sub_techniques.as_ref().unwrap().len())
+        let fetched_sub_techniques = AttackService::new(fake_reqwest)
+            .get_techniques(Type::MOBILE)?
+            .iter()
+            .filter(|technique| technique.sub_techniques.is_some())
+            .map(|technique| technique.sub_techniques.as_ref().unwrap().len())
             .reduce(|accum, len| accum + len)
             .unwrap();
-        
+
         assert_eq!(fetched_sub_techniques, SCRAPED_SUB_TECHINQUES_MOBILE_ROWS);
 
         Ok(())
@@ -213,11 +239,13 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/techniques/ics.html").to_string());
 
-        let fetched_sub_techniques = AttackService::new(fake_reqwest).get_techniques(Type::ICS)?.iter()
-            .filter(|technique| technique.borrow().sub_techniques.is_some())
-            .map(|technique| technique.borrow().sub_techniques.as_ref().unwrap().len())
+        let fetched_sub_techniques = AttackService::new(fake_reqwest)
+            .get_techniques(Type::ICS)?
+            .iter()
+            .filter(|technique| technique.sub_techniques.is_some())
+            .map(|technique| technique.sub_techniques.as_ref().unwrap().len())
             .reduce(|accum, len| accum + len);
-        
+
         assert!(fetched_sub_techniques.is_none());
 
         Ok(())
