@@ -1,4 +1,10 @@
-use crate::WebFetch;
+// TODO: Implement iterator for tables.
+// TODO: Save an offline version of the downloaded data.
+// TODO: Create the command line version for ATT&CK.
+
+use std::{collections::HashMap};
+
+use crate::{remove_ext_link_ref, WebFetch};
 use select::{
     document::Document,
     predicate::{self, Predicate},
@@ -73,5 +79,51 @@ impl<S: WebFetch> AttackService<S> {
             .find(predicate::Name("table"))
             .map(|table_node| self.scrape_table(table_node))
             .collect();
+    }
+
+    pub fn scrape_entity_name<'a>(&self, document: &'a Document) -> String {
+        return document
+            .find(predicate::Name("h1").child(predicate::Text))
+            .map(|h1_node| h1_node.text().trim().to_string())
+            .collect::<Vec<String>>()
+            .join(" ");
+    }
+
+    pub fn scrape_entity_description<'a>(&self, document: &'a Document) -> String {
+        let desc = document
+            .find(
+                predicate::Name("div")
+                    .and(predicate::Class("description-body"))
+                    .descendant(predicate::Name("p").child(predicate::Text)),
+            )
+            .map(|p_node| p_node.text())
+            .collect::<Vec<String>>()
+            .join("\n");
+        
+        return remove_ext_link_ref(&desc);
+    }
+
+    pub fn scrape_entity_h2_tables<'a>(&self, document: &'a Document) -> HashMap<String, Table> {
+        let tag = "h2";
+        let mut table_id: Option<&str> = None;
+        let mut tables: HashMap<String, Table> = HashMap::new();
+
+        for node in document.find(
+            predicate::Name("div")
+                .and(predicate::Class("container-fluid"))
+                .child(
+                    predicate::Name(tag)
+                        .or(predicate::Name("table"))
+                        .or(predicate::Name("p")),
+                ),
+        ) {
+            if node.name() == Some(tag) {
+                table_id = node.attr("id");
+            } else if node.name() == Some("table") && table_id.is_some() {
+                tables.insert(table_id.unwrap().to_string(), self.scrape_table(node));
+            }
+        }
+
+        return tables;
     }
 }

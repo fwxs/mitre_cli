@@ -1,5 +1,5 @@
 use super::{Row, Table};
-use crate::{attack::AttackService, error, WebFetch, remove_ext_link_ref};
+use crate::{attack::AttackService, error, remove_ext_link_ref, WebFetch};
 use select::{
     document::Document,
     predicate::{self, Predicate},
@@ -9,15 +9,15 @@ use std::{cell::RefCell, rc::Rc};
 const ATTCK_DATA_SOURCES_URL: &'static str = "https://attack.mitre.org/datasources/";
 
 #[derive(Debug, Default)]
-pub struct SubDetection {
+pub struct SubDetectionRow {
     pub id: String,
     pub name: String,
     pub detects: String,
 }
 
-impl From<&Row> for SubDetection {
+impl From<&Row> for SubDetectionRow {
     fn from(row: &Row) -> Self {
-        let mut sub_detection = SubDetection::default();
+        let mut sub_detection = Self::default();
 
         if let Some(id) = row.cols.get(2) {
             sub_detection.id = id.to_string();
@@ -36,27 +36,27 @@ impl From<&Row> for SubDetection {
 }
 
 #[derive(Debug, Default)]
-pub struct Detection {
+pub struct DetectionRow {
     pub domain: String,
     pub id: String,
     pub name: String,
     pub detects: String,
-    pub sub_detections: Option<Vec<SubDetection>>,
+    pub sub_detections: Option<Vec<SubDetectionRow>>,
 }
 
-impl Detection {
-    fn add_subdetection(&mut self, sub_detection: SubDetection) {
+impl DetectionRow {
+    fn add_subdetection(&mut self, sub_detection: SubDetectionRow) {
         if self.sub_detections.is_none() {
-            self.sub_detections = Some(vec![sub_detection])
-        } else {
-            self.sub_detections.as_mut().unwrap().push(sub_detection);
+            self.sub_detections = Some(vec![])
         }
+
+        self.sub_detections.as_mut().unwrap().push(sub_detection);
     }
 }
 
-impl From<&Row> for Detection {
+impl From<&Row> for DetectionRow {
     fn from(row: &Row) -> Self {
-        let mut detection = Detection::default();
+        let mut detection = Self::default();
         let mut inx = 0;
 
         if let Some(domain) = row.cols.get(inx) {
@@ -89,26 +89,31 @@ impl From<&Row> for Detection {
     }
 }
 
-impl From<&Table> for Vec<Detection> {
+#[derive(Debug, Default)]
+pub struct DetectionsTable(pub Vec<DetectionRow>);
+
+impl From<&Table> for DetectionsTable {
     fn from(table: &Table) -> Self {
-        let mut retrieved_detections: Vec<Rc<RefCell<Detection>>> = Vec::new();
-        let mut detection: Rc<RefCell<Detection>> = Rc::default();
+        let mut retrieved_detections: Vec<Rc<RefCell<DetectionRow>>> = Vec::new();
+        let mut detection: Rc<RefCell<DetectionRow>> = Rc::default();
 
         for row in table.rows.iter() {
             if !row.cols[0].is_empty() {
-                detection = Rc::new(RefCell::new(Detection::from(row)));
+                detection = Rc::new(RefCell::new(DetectionRow::from(row)));
                 retrieved_detections.push(Rc::clone(&detection));
             } else {
                 detection
                     .borrow_mut()
-                    .add_subdetection(SubDetection::from(row));
+                    .add_subdetection(SubDetectionRow::from(row));
             }
         }
 
-        return retrieved_detections
-            .iter()
-            .map(|detection| detection.take())
-            .collect();
+        return Self(
+            retrieved_detections
+                .iter()
+                .map(|detection| detection.take())
+                .collect(),
+        );
     }
 }
 
@@ -116,17 +121,17 @@ impl From<&Table> for Vec<Detection> {
 pub struct DataComponent {
     pub name: String,
     pub description: String,
-    pub detections: Vec<Detection>,
+    pub detections: DetectionsTable,
 }
 
 #[derive(Debug, Default)]
-pub struct DataSource {
+pub struct DataSourceRow {
     pub id: String,
     pub name: String,
     pub description: String,
 }
 
-impl From<&Row> for DataSource {
+impl From<&Row> for DataSourceRow {
     fn from(row: &Row) -> Self {
         let mut data_source = Self::default();
 
@@ -142,12 +147,12 @@ impl From<&Row> for DataSource {
             data_source.description = desc.to_string();
 
             if data_source.description.contains("\n") {
-                let desc: Vec<String> = data_source
+                data_source.description = data_source
                     .description
                     .split("\n")
                     .map(|str_slice| str_slice.trim().to_string())
-                    .collect();
-                data_source.description = desc.join(" ");
+                    .collect::<Vec<String>>()
+                    .join("\n");
             }
         }
 
@@ -155,14 +160,31 @@ impl From<&Row> for DataSource {
     }
 }
 
-impl From<&Table> for Vec<DataSource> {
+#[derive(Debug, Default)]
+pub struct DataSourcesTable(pub Vec<DataSourceRow>);
+
+impl DataSourcesTable {
+    pub fn is_empty(&self) -> bool {
+        return self.0.is_empty();
+    }
+
+    pub fn len(&self) -> usize {
+        return self.0.len();
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<DataSourceRow> {
+        return self.0.iter();
+    }
+}
+
+impl From<&Table> for DataSourcesTable {
     fn from(table: &Table) -> Self {
-        return table.rows.iter().map(DataSource::from).collect();
+        return Self(table.rows.iter().map(DataSourceRow::from).collect());
     }
 }
 
 impl<S: WebFetch> AttackService<S> {
-    pub fn get_data_sources(&self) -> Result<Vec<DataSource>, error::Error> {
+    pub fn get_data_sources(&self) -> Result<DataSourcesTable, error::Error> {
         let fetched_response = self.req_client.fetch(ATTCK_DATA_SOURCES_URL)?;
         let document = Document::from(fetched_response.as_str());
         let data = self.scrape_tables(&document);
@@ -171,7 +193,7 @@ impl<S: WebFetch> AttackService<S> {
             return Ok(table.into());
         }
 
-        return Ok(Vec::default());
+        return Ok(DataSourcesTable::default());
     }
 
     pub fn get_data_source(
@@ -229,7 +251,7 @@ impl<S: WebFetch> AttackService<S> {
             .map(|(name, desc, table)| DataComponent {
                 name: name.clone(),
                 description: desc.clone(),
-                detections: Vec::<Detection>::from(table),
+                detections: table.into(),
             })
             .collect();
     }
@@ -248,8 +270,9 @@ mod tests {
 
     #[test]
     fn test_fetch_data_sources() -> Result<(), error::Error> {
-        let fake_reqwest = FakeHttpReqwest::default()
-            .set_success_response(include_str!("html/attck/data_sources.html").to_string());
+        let fake_reqwest = FakeHttpReqwest::default().set_success_response(
+            include_str!("html/attck/data_sources/data_sources.html").to_string(),
+        );
 
         let retrieved_data_source = AttackService::new(fake_reqwest).get_data_sources()?;
 
@@ -267,7 +290,7 @@ mod tests {
     #[test]
     fn test_fetch_data_source_data_components() -> Result<(), error::Error> {
         let fake_reqwest = FakeHttpReqwest::default().set_success_response(
-            include_str!("html/attck/enterprise_active_directory.html").to_string(),
+            include_str!("html/attck/data_sources/enterprise_active_directory.html").to_string(),
         );
 
         let retrieved_data_comp =

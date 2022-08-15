@@ -1,21 +1,18 @@
-use select::{
-    document::Document,
-    predicate::{self, Predicate},
-};
+use select::document::Document;
 
 use crate::{error::Error, WebFetch};
 
-use super::{techniques::Technique, AttackService, Row, Table};
+use super::{techniques::TechniquesTable, AttackService, Row, Table};
 
 const TACTICS_URL: &'static str = "https://attack.mitre.org/tactics/";
 
-pub enum Type {
+pub enum Domain {
     ENTERPRISE,
     MOBILE,
     ICS,
 }
 
-impl Into<&'static str> for Type {
+impl Into<&'static str> for Domain {
     fn into(self) -> &'static str {
         match self {
             Self::ENTERPRISE => "https://attack.mitre.org/tactics/enterprise/",
@@ -26,16 +23,15 @@ impl Into<&'static str> for Type {
 }
 
 #[derive(Default, Debug)]
-pub struct Tactic {
+pub struct TacticRow {
     pub id: String,
     pub name: String,
     pub description: String,
-    pub techniques: Option<Vec<Technique>>,
 }
 
-impl From<&Row> for Tactic {
+impl From<&Row> for TacticRow {
     fn from(row: &Row) -> Self {
-        let mut tactic = Tactic::default();
+        let mut tactic = Self::default();
 
         if let Some(id) = row.cols.get(0) {
             tactic.id = id.to_string();
@@ -62,14 +58,43 @@ impl From<&Row> for Tactic {
     }
 }
 
-impl From<&Table> for Vec<Tactic> {
-    fn from(table: &Table) -> Self {
-        return table.rows.iter().map(Tactic::from).collect();
+#[derive(Default, Debug)]
+pub struct TacticsTable {
+    pub tactics: Vec<TacticRow>,
+}
+
+impl TacticsTable {
+    pub fn len(&self) -> usize {
+        return self.tactics.len();
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<TacticRow> {
+        return self.tactics.iter();
+    }
+
+    pub fn is_empty(&self) -> bool {
+        return self.tactics.is_empty();
     }
 }
 
+impl From<&Table> for TacticsTable {
+    fn from(table: &Table) -> Self {
+        return Self {
+            tactics: table.rows.iter().map(TacticRow::from).collect(),
+        };
+    }
+}
+
+#[derive(Default, Debug)]
+pub struct Tactic {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub techniques: Option<TechniquesTable>,
+}
+
 impl<S: WebFetch> AttackService<S> {
-    pub fn get_tactics(self, tactic_type: Type) -> Result<Vec<Tactic>, Error> {
+    pub fn get_tactics(&self, tactic_type: Domain) -> Result<TacticsTable, Error> {
         let fetched_response = self.req_client.fetch(tactic_type.into())?;
         let document = Document::from(fetched_response.as_str());
         let data = self.scrape_tables(&document);
@@ -78,41 +103,28 @@ impl<S: WebFetch> AttackService<S> {
             return Ok(table.into());
         }
 
-        return Ok(Vec::default());
+        return Ok(TacticsTable::default());
     }
 
-    pub fn get_tactic(self, tactic_id: &str) -> Result<Tactic, Error> {
+    pub fn get_tactic(&self, tactic_id: &str) -> Result<Tactic, Error> {
         let url = format!("{}{}", TACTICS_URL, tactic_id.to_uppercase());
         let fetched_response = self.req_client.fetch(url.as_str())?;
         let document = Document::from(fetched_response.as_str());
-        let mut tactic = Tactic {
+
+        return Ok(Tactic {
             id: tactic_id.to_uppercase(),
-            name: document
-                .find(predicate::Name("h1").child(predicate::Text))
-                .map(|h1_node| h1_node.text().trim().to_string())
-                .collect::<Vec<String>>()
-                .join(" "),
-            description: document
-                .find(
-                    predicate::Name("div")
-                        .and(predicate::Class("description-body"))
-                        .descendant(predicate::Name("p").child(predicate::Text)),
-                )
-                .map(|p_node| p_node.text())
-                .collect::<Vec<String>>()
-                .join("\n"),
-            techniques: None
-        };
+            name: self.scrape_entity_name(&document),
+            description: self.scrape_entity_description(&document),
+            techniques: self.scrape_tactic_techniques(&document),
+        });
+    }
 
-        let data = self.scrape_tables(&document);
-
-        if let Some(table) = data.get(0) {
-            tactic.techniques = Some(table.into());
-
-            return Ok(tactic);
+    pub(self) fn scrape_tactic_techniques(&self, document: &Document) -> Option<TechniquesTable> {
+        if let Some(table) = self.scrape_tables(&document).get(0) {
+            return Some(table.into());
         }
 
-        return Ok(Tactic::default());
+        return None;
     }
 }
 
@@ -133,8 +145,8 @@ mod tests {
     fn test_fetch_enterprise_tactics_html() -> Result<(), super::Error> {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/tactics/enterprise.html").to_string());
-        let retrieved_tactics: Vec<Tactic> =
-            AttackService::<FakeHttpReqwest>::new(fake_reqwest).get_tactics(Type::ENTERPRISE)?;
+        let retrieved_tactics =
+            AttackService::<FakeHttpReqwest>::new(fake_reqwest).get_tactics(Domain::ENTERPRISE)?;
 
         assert_eq!(
             retrieved_tactics.is_empty(),
@@ -152,8 +164,8 @@ mod tests {
     fn test_fetch_mobile_tactics_html() -> Result<(), super::Error> {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/tactics/mobile.html").to_string());
-        let retrieved_tactics: Vec<Tactic> =
-            AttackService::<FakeHttpReqwest>::new(fake_reqwest).get_tactics(Type::MOBILE)?;
+        let retrieved_tactics =
+            AttackService::<FakeHttpReqwest>::new(fake_reqwest).get_tactics(Domain::MOBILE)?;
 
         assert_eq!(
             retrieved_tactics.is_empty(),
@@ -170,8 +182,8 @@ mod tests {
     fn test_fetch_ics_tactics_html() -> Result<(), super::Error> {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/tactics/ics.html").to_string());
-        let retrieved_tactics: Vec<Tactic> =
-            AttackService::<FakeHttpReqwest>::new(fake_reqwest).get_tactics(Type::ICS)?;
+        let retrieved_tactics =
+            AttackService::<FakeHttpReqwest>::new(fake_reqwest).get_tactics(Domain::ICS)?;
 
         assert_eq!(
             retrieved_tactics.is_empty(),
@@ -189,7 +201,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_error_response(Error::RequestError(format!("Reqwest error")));
         let error: Error = AttackService::<FakeHttpReqwest>::new(fake_reqwest)
-            .get_tactics(Type::ENTERPRISE)
+            .get_tactics(Domain::ENTERPRISE)
             .unwrap_err();
 
         assert!(matches!(error, Error::RequestError(_)));
@@ -216,8 +228,8 @@ mod tests {
         Ok(())
     }
 
-    fn assert_tactics(tactics: Vec<Tactic>) {
-        for tactic in tactics {
+    fn assert_tactics(tactics: TacticsTable) {
+        for tactic in tactics.iter() {
             assert_ne!(tactic.id.is_empty(), true, "Tactic ID should not empty");
             assert_ne!(tactic.name.is_empty(), true, "Tactic Name should not empty");
             assert_ne!(

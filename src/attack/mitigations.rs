@@ -2,33 +2,51 @@ use select::document::Document;
 
 use crate::{attack::AttackService, error, WebFetch};
 
-use super::{Row, Table};
+use super::{techniques::domain::DomainTechniquesTable, Row, Table};
 
-pub enum Type {
+const ATTCK_MITIGATION_URL: &'static str = "https://attack.mitre.org/mitigations/";
+
+pub enum Domain {
     ENTERPRISE,
     MOBILE,
-    ICS
+    ICS,
 }
 
-impl Into<&'static str> for Type {
+impl Into<&'static str> for Domain {
     fn into(self) -> &'static str {
         match self {
             Self::ENTERPRISE => "https://attack.mitre.org/mitigations/enterprise/",
             Self::MOBILE => "https://attack.mitre.org/mitigations/mobile/",
-            Self::ICS => "https://attack.mitre.org/mitigations/ics/"
+            Self::ICS => "https://attack.mitre.org/mitigations/ics/",
         }
     }
 }
 
-
 #[derive(Default, Debug)]
-pub struct Mitigation {
+pub struct MitigationRow {
     pub id: String,
     pub name: String,
     pub description: String,
 }
 
-impl From<&Row> for Mitigation {
+#[derive(Default, Debug)]
+pub struct MitigationTable(pub Vec<MitigationRow>);
+
+impl MitigationTable {
+    pub fn is_empty(&self) -> bool {
+        return self.0.is_empty();
+    }
+
+    pub fn len(&self) -> usize {
+        return self.0.len();
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<MitigationRow> {
+        return self.0.iter();
+    }
+}
+
+impl From<&Row> for MitigationRow {
     fn from(row: &Row) -> Self {
         let mut mitigation = Self::default();
 
@@ -44,12 +62,12 @@ impl From<&Row> for Mitigation {
             mitigation.description = desc.to_string();
 
             if mitigation.description.contains("\n") {
-                let desc: Vec<String> = mitigation
+                mitigation.description = mitigation
                     .description
                     .split("\n")
                     .map(|str_slice| str_slice.trim().to_string())
-                    .collect();
-                mitigation.description = desc.join(" ");
+                    .collect::<Vec<String>>()
+                    .join("\n");
             }
         }
 
@@ -57,27 +75,68 @@ impl From<&Row> for Mitigation {
     }
 }
 
-impl From<&Table> for Vec<Mitigation> {
+impl From<&Table> for MitigationTable {
     fn from(table: &Table) -> Self {
-        return table.rows.iter().map(Mitigation::from).collect();
+        return Self(table.rows.iter().map(MitigationRow::from).collect());
     }
+}
+
+impl From<Table> for Option<MitigationTable> {
+    fn from(table: Table) -> Self {
+        if table.rows.is_empty() {
+            return None;
+        }
+
+        return Some(MitigationTable(
+            table.rows.iter().map(MitigationRow::from).collect(),
+        ));
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct Mitigation {
+    pub id: String,
+    pub name: String,
+    pub desc: String,
+    pub addressed_techniques: Option<DomainTechniquesTable>,
 }
 
 impl<S: WebFetch> AttackService<S> {
-    pub fn get_mitigations(self, mitigation_type: Type) -> Result<Vec<Mitigation>, error::Error> {
-
+    pub fn get_mitigations(
+        &self,
+        mitigation_type: Domain,
+    ) -> Result<MitigationTable, error::Error> {
         let fetched_response = self.req_client.fetch(mitigation_type.into())?;
         let document = Document::from(fetched_response.as_str());
         let data = self.scrape_tables(&document);
-        
+
         if let Some(table) = data.get(0) {
             return Ok(table.into());
         }
-        
-        return Ok(Vec::default());
+
+        return Ok(MitigationTable::default());
+    }
+
+    pub fn get_mitigation(&self, mitigation_id: &str) -> Result<Mitigation, error::Error> {
+        let fetched_response = self
+            .req_client
+            .fetch(format!("{}{}", ATTCK_MITIGATION_URL, mitigation_id).as_str())?;
+        let document = Document::from(fetched_response.as_str());
+        let mut tables = self.scrape_entity_h2_tables(&document);
+        let mitigation = Mitigation {
+            id: mitigation_id.to_string(),
+            name: self.scrape_entity_name(&document),
+            desc: self.scrape_entity_description(&document),
+            addressed_techniques: if let Some(techniques_table) = tables.remove("techniques") {
+                techniques_table.into()
+            } else {
+                None
+            },
+        };
+
+        return Ok(mitigation);
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -88,12 +147,16 @@ mod tests {
     const SCRAPED_MOBILE_ROWS: usize = 11;
     const SCRAPED_ICS_ROWS: usize = 51;
 
+    const TEST_MITIGATION_ID: &'static str = "M1052";
+
     #[test]
     fn test_fetch_enterprise_mitigations() -> Result<(), error::Error> {
-        let fake_reqwest = FakeHttpReqwest::default()
-            .set_success_response(include_str!("html/attck/mitigations/enterprise.html").to_string());
+        let fake_reqwest = FakeHttpReqwest::default().set_success_response(
+            include_str!("html/attck/mitigations/enterprise.html").to_string(),
+        );
 
-        let retrieved_mitigations = AttackService::new(fake_reqwest).get_mitigations(Type::ENTERPRISE)?;
+        let retrieved_mitigations =
+            AttackService::new(fake_reqwest).get_mitigations(Domain::ENTERPRISE)?;
 
         assert_eq!(
             retrieved_mitigations.is_empty(),
@@ -110,7 +173,8 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/mitigations/mobile.html").to_string());
 
-        let retrieved_mitigations = AttackService::new(fake_reqwest).get_mitigations(Type::MOBILE)?;
+        let retrieved_mitigations =
+            AttackService::new(fake_reqwest).get_mitigations(Domain::MOBILE)?;
 
         assert_eq!(
             retrieved_mitigations.is_empty(),
@@ -127,7 +191,8 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/mitigations/ics.html").to_string());
 
-        let retrieved_mitigations = AttackService::new(fake_reqwest).get_mitigations(Type::ICS)?;
+        let retrieved_mitigations =
+            AttackService::new(fake_reqwest).get_mitigations(Domain::ICS)?;
 
         assert_eq!(
             retrieved_mitigations.is_empty(),
@@ -135,6 +200,23 @@ mod tests {
             "retrieved mitigations should not be empty"
         );
         assert_eq!(retrieved_mitigations.len(), SCRAPED_ICS_ROWS);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_fetch_mitigation_information() -> Result<(), error::Error> {
+        let fake_reqwest = FakeHttpReqwest::default().set_success_response(
+            include_str!("html/attck/mitigations/user_account_control.html").to_string(),
+        );
+
+        let mitigation = AttackService::new(fake_reqwest).get_mitigation(TEST_MITIGATION_ID)?;
+
+        assert_ne!(
+            mitigation.addressed_techniques.is_none(),
+            true,
+            "techniques addressed by mitigation should not be abscent"
+        );
 
         Ok(())
     }
