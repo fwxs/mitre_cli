@@ -1,5 +1,20 @@
+#[macro_use]
+extern crate lazy_static;
 pub mod attack;
 pub mod error;
+
+lazy_static! {
+    static ref RE: regex::Regex = regex::Regex::new(r"\[[0-9]+\]").unwrap();
+}
+
+fn remove_ext_link_ref(text: &str) -> String {
+    return RE
+        .replace_all(text, "")
+        .split_whitespace()
+        .filter(|text| !text.is_empty())
+        .collect::<Vec<&str>>()
+        .join(" ");
+}
 
 pub trait WebFetch {
     fn fetch(&self, url: &str) -> Result<String, error::Error>;

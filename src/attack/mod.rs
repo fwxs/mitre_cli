@@ -4,12 +4,12 @@ use select::{
     predicate::{self, Predicate},
 };
 
-pub mod tactics;
-pub mod techniques;
 pub mod data_sources;
 pub mod groups;
 pub mod mitigations;
 pub mod software;
+pub mod tactics;
+pub mod techniques;
 
 #[derive(Default, Debug)]
 pub struct Row {
@@ -43,34 +43,35 @@ impl<S: WebFetch> AttackService<S> {
         return Self { req_client };
     }
 
-    // TODO: Give each table an ID, according to a previous header.
+    fn scrape_table(&self, table_node: select::node::Node) -> Table {
+        let mut table = Table::default();
+
+        table.headers = table_node
+            .find(
+                predicate::Name("thead")
+                    .descendant(predicate::Name("tr").descendant(predicate::Element)),
+            )
+            .map(|node_text| node_text.text())
+            .collect::<Vec<String>>();
+
+        table.rows.extend(
+            table_node
+                .find(predicate::Name("tbody").descendant(predicate::Name("tr")))
+                .map(|row| {
+                    row.find(predicate::Name("td"))
+                        .map(|col| col.text().trim().to_string())
+                        .collect::<Row>()
+                })
+                .collect::<Vec<Row>>(),
+        );
+
+        return table;
+    }
+
     pub fn scrape_tables<'a>(&self, document: &'a Document) -> Vec<Table> {
-        let mut tables: Vec<Table> = Vec::default();
-
-        for table_node in document.find(predicate::Name("table")) {
-            let mut table = Table::default();
-
-            table.headers = table_node
-                .find(
-                    predicate::Name("thead")
-                        .descendant(predicate::Name("tr").descendant(predicate::Element)),
-                )
-                .map(|node_text| node_text.text())
-                .collect::<Vec<String>>();
-
-            table.rows.extend(
-                table_node.find(predicate::Name("tbody").descendant(predicate::Name("tr")))
-                .map(
-                    |row| row.find(predicate::Name("td"))
-                    .map(|col| col.text().trim().to_string())
-                    .collect::<Row>()
-                )
-                .collect::<Vec<Row>>()
-            );
-
-            tables.push(table);
-        }
-
-        return tables;
+        return document
+            .find(predicate::Name("table"))
+            .map(|table_node| self.scrape_table(table_node))
+            .collect();
     }
 }
