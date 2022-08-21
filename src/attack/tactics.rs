@@ -29,19 +29,19 @@ pub struct TacticRow {
     pub description: String,
 }
 
-impl From<&Row> for TacticRow {
-    fn from(row: &Row) -> Self {
+impl From<Row> for TacticRow {
+    fn from(row: Row) -> Self {
         let mut tactic = Self::default();
 
-        if let Some(id) = row.cols.get(0) {
+        if let Some(id) = row.get_col(0) {
             tactic.id = id.to_string();
         }
 
-        if let Some(name) = row.cols.get(1) {
+        if let Some(name) = row.get_col(1) {
             tactic.name = name.to_string();
         }
 
-        if let Some(desc) = row.cols.get(2) {
+        if let Some(desc) = row.get_col(2) {
             tactic.description = desc.to_string();
 
             if tactic.description.contains("\n") {
@@ -59,29 +59,30 @@ impl From<&Row> for TacticRow {
 }
 
 #[derive(Default, Debug)]
-pub struct TacticsTable {
-    pub tactics: Vec<TacticRow>,
+pub struct TacticsTable (pub Vec<TacticRow>);
+
+impl IntoIterator for TacticsTable {
+    type Item = TacticRow;
+    type IntoIter = std::vec::IntoIter<TacticRow>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        return self.0.into_iter();
+    }
 }
 
 impl TacticsTable {
     pub fn len(&self) -> usize {
-        return self.tactics.len();
-    }
-
-    pub fn iter(&self) -> std::slice::Iter<TacticRow> {
-        return self.tactics.iter();
+        return self.0.len();
     }
 
     pub fn is_empty(&self) -> bool {
-        return self.tactics.is_empty();
+        return self.0.is_empty();
     }
 }
 
-impl From<&Table> for TacticsTable {
-    fn from(table: &Table) -> Self {
-        return Self {
-            tactics: table.rows.iter().map(TacticRow::from).collect(),
-        };
+impl From<Table> for TacticsTable {
+    fn from(table: Table) -> Self {
+        return Self (table.into_iter().map(TacticRow::from).collect());
     }
 }
 
@@ -97,13 +98,13 @@ impl<S: WebFetch> AttackService<S> {
     pub fn get_tactics(&self, tactic_type: Domain) -> Result<TacticsTable, Error> {
         let fetched_response = self.req_client.fetch(tactic_type.into())?;
         let document = Document::from(fetched_response.as_str());
-        let data = self.scrape_tables(&document);
 
-        if let Some(table) = data.get(0) {
-            return Ok(table.into());
-        }
-
-        return Ok(TacticsTable::default());
+        return Ok(self
+            .scrape_tables(&document)
+            .pop()
+            .map_or(TacticsTable::default(), |scrapped_table| {
+                scrapped_table.into()
+            }));
     }
 
     pub fn get_tactic(&self, tactic_id: &str) -> Result<Tactic, Error> {
@@ -119,12 +120,11 @@ impl<S: WebFetch> AttackService<S> {
         });
     }
 
-    pub(self) fn scrape_tactic_techniques(&self, document: &Document) -> Option<TechniquesTable> {
-        if let Some(table) = self.scrape_tables(&document).get(0) {
-            return Some(table.into());
-        }
-
-        return None;
+    fn scrape_tactic_techniques(&self, document: &Document) -> Option<TechniquesTable> {
+        return self
+            .scrape_tables(&document)
+            .pop()
+            .map_or(None, |table| Some(table.into()));
     }
 }
 
@@ -229,7 +229,7 @@ mod tests {
     }
 
     fn assert_tactics(tactics: TacticsTable) {
-        for tactic in tactics.iter() {
+        for tactic in tactics {
             assert_ne!(tactic.id.is_empty(), true, "Tactic ID should not empty");
             assert_ne!(tactic.name.is_empty(), true, "Tactic Name should not empty");
             assert_ne!(

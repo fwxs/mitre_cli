@@ -1,8 +1,7 @@
-// TODO: Implement iterator for tables.
 // TODO: Save an offline version of the downloaded data.
 // TODO: Create the command line version for ATT&CK.
 
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
 use crate::{remove_ext_link_ref, WebFetch};
 use select::{
@@ -22,15 +21,26 @@ pub struct Row {
     pub cols: Vec<String>,
 }
 
+impl Row {
+    pub fn get_col(&self, inx: usize) -> Option<&String> {
+        return self.cols.get(inx);
+    }
+}
+
 impl FromIterator<String> for Row {
     fn from_iter<T: IntoIterator<Item = String>>(iter: T) -> Self {
-        let mut cols = Vec::new();
+        return Self {
+            cols: iter.into_iter().map(String::from).collect(),
+        };
+    }
+}
 
-        for item in iter {
-            cols.push(item);
-        }
+impl IntoIterator for Row {
+    type Item = String;
+    type IntoIter = std::vec::IntoIter<String>;
 
-        return Self { cols };
+    fn into_iter(self) -> Self::IntoIter {
+        return self.cols.into_iter();
     }
 }
 
@@ -38,6 +48,21 @@ impl FromIterator<String> for Row {
 pub struct Table {
     pub headers: Vec<String>,
     pub rows: Vec<Row>,
+}
+
+impl Table {
+    pub fn is_empty(&self) -> bool {
+        return self.rows.is_empty();
+    }
+}
+
+impl IntoIterator for Table {
+    type Item = Row;
+    type IntoIter = std::vec::IntoIter<Row>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        return self.rows.into_iter();
+    }
 }
 
 pub struct AttackService<S: WebFetch> {
@@ -99,7 +124,7 @@ impl<S: WebFetch> AttackService<S> {
             .map(|p_node| p_node.text())
             .collect::<Vec<String>>()
             .join("\n");
-        
+
         return remove_ext_link_ref(&desc);
     }
 

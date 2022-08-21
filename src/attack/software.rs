@@ -2,7 +2,7 @@ use select::document::Document;
 
 use crate::{attack::AttackService, error, WebFetch};
 
-use super::{Row, Table, techniques::domain::DomainTechniquesTable};
+use super::{techniques::domain::DomainTechniquesTable, Row, Table};
 
 const ATTCK_SOFTWARE_URL: &'static str = "https://attack.mitre.org/software/";
 
@@ -14,23 +14,23 @@ pub struct SoftwareRow {
     pub description: String,
 }
 
-impl From<&Row> for SoftwareRow {
-    fn from(row: &Row) -> Self {
+impl From<Row> for SoftwareRow {
+    fn from(row: Row) -> Self {
         let mut software = Self::default();
 
-        if let Some(id) = row.cols.get(0) {
+        if let Some(id) = row.get_col(0) {
             software.id = id.to_string();
         }
 
-        if let Some(name) = row.cols.get(1) {
+        if let Some(name) = row.get_col(1) {
             software.name = name.to_string();
         }
 
-        if let Some(assoc_software) = row.cols.get(2) {
+        if let Some(assoc_software) = row.get_col(2) {
             software.assoc_software = Some(assoc_software.split(", ").map(String::from).collect())
         }
 
-        if let Some(desc) = row.cols.get(3) {
+        if let Some(desc) = row.get_col(3) {
             software.description = desc.to_string();
 
             if software.description.contains("\n") {
@@ -58,15 +58,20 @@ impl SoftwareTable {
     pub fn len(&self) -> usize {
         return self.0.len();
     }
+}
 
-    pub fn iter(&self) -> std::slice::Iter<SoftwareRow> {
-        return self.0.iter();
+impl IntoIterator for SoftwareTable {
+    type Item = SoftwareRow;
+    type IntoIter = std::vec::IntoIter<SoftwareRow>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        return self.0.into_iter();
     }
 }
 
-impl From<&Table> for SoftwareTable {
-    fn from(table: &Table) -> Self {
-        return Self(table.rows.iter().map(SoftwareRow::from).collect());
+impl From<Table> for SoftwareTable {
+    fn from(table: Table) -> Self {
+        return Self(table.into_iter().map(SoftwareRow::from).collect());
     }
 }
 
@@ -76,15 +81,15 @@ pub struct AssocGroupsRow {
     pub name: String,
 }
 
-impl From<&Row> for AssocGroupsRow {
-    fn from(row: &Row) -> Self {
+impl From<Row> for AssocGroupsRow {
+    fn from(row: Row) -> Self {
         let mut group = Self::default();
 
-        if let Some(id) = row.cols.get(0) {
+        if let Some(id) = row.get_col(0) {
             group.id = id.to_string();
         }
 
-        if let Some(name) = row.cols.get(1) {
+        if let Some(name) = row.get_col(1) {
             group.name = name.to_string();
         }
 
@@ -95,15 +100,24 @@ impl From<&Row> for AssocGroupsRow {
 #[derive(Debug, Default)]
 pub struct AssocGroupsTable(pub Vec<AssocGroupsRow>);
 
+impl IntoIterator for AssocGroupsTable {
+    type Item = AssocGroupsRow;
+    type IntoIter = std::vec::IntoIter<AssocGroupsRow>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        return self.0.into_iter();
+    }
+}
+
 impl From<Table> for AssocGroupsTable {
     fn from(table: Table) -> Self {
-        return Self(table.rows.iter().map(AssocGroupsRow::from).collect());
+        return Self(table.into_iter().map(AssocGroupsRow::from).collect());
     }
 }
 
 impl From<Table> for Option<AssocGroupsTable> {
     fn from(table: Table) -> Self {
-        if table.rows.is_empty() {
+        if table.is_empty() {
             return None;
         }
 
@@ -124,13 +138,10 @@ impl<S: WebFetch> AttackService<S> {
     pub fn get_software(&self) -> Result<SoftwareTable, error::Error> {
         let fetched_response = self.req_client.fetch(ATTCK_SOFTWARE_URL)?;
         let document = Document::from(fetched_response.as_str());
-        let data = self.scrape_tables(&document);
-
-        if let Some(table) = data.get(0) {
-            return Ok(table.into());
-        }
-
-        return Ok(SoftwareTable::default());
+        return Ok(self
+            .scrape_tables(&document)
+            .pop()
+            .map_or(SoftwareTable::default(), |table| table.into()));
     }
 
     pub fn get_software_info(&self, group_id: &str) -> Result<Software, error::Error> {

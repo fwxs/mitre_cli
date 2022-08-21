@@ -2,7 +2,7 @@ use select::document::Document;
 
 use crate::{attack::AttackService, error, WebFetch};
 
-use super::{Row, Table, techniques::domain::DomainTechniquesTable};
+use super::{techniques::domain::DomainTechniquesTable, Row, Table};
 
 const ATTCK_GROUPS_URL: &'static str = "https://attack.mitre.org/groups/";
 
@@ -14,23 +14,23 @@ pub struct GroupRow {
     pub description: String,
 }
 
-impl From<&Row> for GroupRow {
-    fn from(row: &Row) -> Self {
+impl From<Row> for GroupRow {
+    fn from(row: Row) -> Self {
         let mut group = Self::default();
 
-        if let Some(id) = row.cols.get(0) {
+        if let Some(id) = row.get_col(0) {
             group.id = id.to_string();
         }
 
-        if let Some(name) = row.cols.get(1) {
+        if let Some(name) = row.get_col(1) {
             group.name = name.to_string();
         }
 
-        if let Some(assoc_groups) = row.cols.get(2) {
+        if let Some(assoc_groups) = row.get_col(2) {
             group.assoc_groups = Some(assoc_groups.split(",").map(String::from).collect());
         }
 
-        if let Some(desc) = row.cols.get(3) {
+        if let Some(desc) = row.get_col(3) {
             group.description = desc.to_string();
 
             if group.description.contains("\n") {
@@ -58,15 +58,20 @@ impl GroupsTable {
     pub fn len(&self) -> usize {
         return self.0.len();
     }
+}
 
-    pub fn iter(&self) -> std::slice::Iter<GroupRow> {
-        return self.0.iter();
+impl IntoIterator for GroupsTable {
+    type Item = GroupRow;
+    type IntoIter = std::vec::IntoIter<GroupRow>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        return self.0.into_iter();
     }
 }
 
-impl From<&Table> for GroupsTable {
-    fn from(table: &Table) -> Self {
-        return Self(table.rows.iter().map(GroupRow::from).collect());
+impl From<Table> for GroupsTable {
+    fn from(table: Table) -> Self {
+        return Self(table.into_iter().map(GroupRow::from).collect());
     }
 }
 
@@ -77,19 +82,19 @@ pub struct SoftwareRow {
     pub techniques: Vec<String>,
 }
 
-impl From<&Row> for SoftwareRow {
-    fn from(row: &Row) -> Self {
+impl From<Row> for SoftwareRow {
+    fn from(row: Row) -> Self {
         let mut software = Self::default();
 
-        if let Some(id) = row.cols.get(0) {
+        if let Some(id) = row.get_col(0) {
             software.id = id.to_string();
         }
 
-        if let Some(name) = row.cols.get(1) {
+        if let Some(name) = row.get_col(1) {
             software.name = name.to_string();
         }
 
-        if let Some(techniques) = row.cols.get(3) {
+        if let Some(techniques) = row.get_col(3) {
             software.techniques = techniques.split(",").map(String::from).collect();
         }
 
@@ -100,15 +105,24 @@ impl From<&Row> for SoftwareRow {
 #[derive(Debug, Default)]
 pub struct SoftwareTable(pub Vec<SoftwareRow>);
 
+impl IntoIterator for SoftwareTable {
+    type Item = SoftwareRow;
+    type IntoIter = std::vec::IntoIter<SoftwareRow>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        return self.0.into_iter();
+    }
+}
+
 impl From<Table> for SoftwareTable {
     fn from(table: Table) -> Self {
-        return Self(table.rows.iter().map(SoftwareRow::from).collect());
+        return Self(table.into_iter().map(SoftwareRow::from).collect());
     }
 }
 
 impl From<Table> for Option<SoftwareTable> {
     fn from(table: Table) -> Self {
-        if table.rows.is_empty() {
+        if table.is_empty() {
             return None;
         }
 
@@ -123,10 +137,6 @@ impl SoftwareTable {
 
     pub fn len(&self) -> usize {
         return self.0.len();
-    }
-
-    pub fn iter(&self) -> std::slice::Iter<SoftwareRow> {
-        return self.0.iter();
     }
 }
 
@@ -144,13 +154,11 @@ impl<S: WebFetch> AttackService<S> {
     pub fn get_groups(&self) -> Result<GroupsTable, error::Error> {
         let fetched_response = self.req_client.fetch(ATTCK_GROUPS_URL)?;
         let document = Document::from(fetched_response.as_str());
-        let data = self.scrape_tables(&document);
 
-        if let Some(table) = data.get(0) {
-            return Ok(table.into());
-        }
-
-        return Ok(GroupsTable::default());
+        return Ok(self
+            .scrape_tables(&document)
+            .pop()
+            .map_or(GroupsTable::default(), |table| table.into()));
     }
 
     pub fn get_group(&self, group_id: &str) -> Result<Group, error::Error> {
@@ -183,8 +191,8 @@ impl<S: WebFetch> AttackService<S> {
         return Ok(group);
     }
 
-    pub(self) fn scrape_assoc_groups(&self, table: Table) -> Vec<String> {
-        table.rows.iter().map(|row| row.cols[0].clone()).collect()
+    fn scrape_assoc_groups(&self, table: Table) -> Vec<String> {
+        return table.into_iter().map(|row| row.cols[0].clone()).collect();
     }
 }
 

@@ -1,4 +1,3 @@
-use core::slice;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -33,19 +32,19 @@ pub struct SubTechniqueRow {
     pub description: String,
 }
 
-impl From<&Row> for SubTechniqueRow {
-    fn from(row: &Row) -> Self {
+impl From<Row> for SubTechniqueRow {
+    fn from(row: Row) -> Self {
         let mut sub_technique = SubTechniqueRow::default();
 
-        if let Some(id) = row.cols.get(1) {
+        if let Some(id) = row.get_col(1) {
             sub_technique.id = id.to_string();
         }
 
-        if let Some(name) = row.cols.get(2) {
+        if let Some(name) = row.get_col(2) {
             sub_technique.name = name.to_string();
         }
 
-        if let Some(desc) = row.cols.get(3) {
+        if let Some(desc) = row.get_col(3) {
             sub_technique.description = desc.to_string();
 
             if sub_technique.description.contains("\n") {
@@ -80,34 +79,19 @@ impl TechniqueRow {
     }
 }
 
-#[derive(Default, Debug)]
-pub struct TechniquesTable {
-    pub techniques: Vec<TechniqueRow>,
-}
-
-impl TechniquesTable {
-    pub fn len(&self) -> usize {
-        return self.techniques.len();
-    }
-
-    pub fn iter(&self) -> slice::Iter<TechniqueRow> {
-        return self.techniques.iter();
-    }
-}
-
-impl From<&Row> for TechniqueRow {
-    fn from(row: &Row) -> Self {
+impl From<Row> for TechniqueRow {
+    fn from(row: Row) -> Self {
         let mut technique = TechniqueRow::default();
 
-        if let Some(id) = row.cols.get(0) {
+        if let Some(id) = row.get_col(0) {
             technique.id = id.to_string();
         }
 
-        if let Some(name) = row.cols.get(1) {
+        if let Some(name) = row.get_col(1) {
             technique.name = name.to_string();
         }
 
-        if let Some(desc) = row.cols.get(2) {
+        if let Some(desc) = row.get_col(2) {
             technique.description = desc.to_string();
 
             if technique.description.contains("\n") {
@@ -124,12 +108,30 @@ impl From<&Row> for TechniqueRow {
     }
 }
 
-impl From<&Table> for TechniquesTable {
-    fn from(table: &Table) -> Self {
+#[derive(Default, Debug)]
+pub struct TechniquesTable(pub Vec<TechniqueRow>);
+
+impl TechniquesTable {
+    pub fn len(&self) -> usize {
+        return self.0.len();
+    }
+}
+
+impl IntoIterator for TechniquesTable {
+    type Item = TechniqueRow;
+    type IntoIter = std::vec::IntoIter<TechniqueRow>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        return self.0.into_iter();
+    }
+}
+
+impl From<Table> for TechniquesTable {
+    fn from(table: Table) -> Self {
         let mut techniques: Vec<Rc<RefCell<TechniqueRow>>> = Vec::new();
         let mut technique: Rc<RefCell<TechniqueRow>> = Rc::default();
 
-        for row in table.rows.iter() {
+        for row in table {
             if !row.cols[0].is_empty() {
                 technique = Rc::new(RefCell::new(TechniqueRow::from(row)));
                 techniques.push(Rc::clone(&technique));
@@ -140,12 +142,12 @@ impl From<&Table> for TechniquesTable {
             }
         }
 
-        return TechniquesTable {
-            techniques: techniques
-                .iter()
+        return TechniquesTable(
+            techniques
+                .into_iter()
                 .map(|technique| technique.take())
                 .collect(),
-        };
+        );
     }
 }
 
@@ -182,20 +184,20 @@ pub struct ProcedureRow {
     pub procedure_type: ProcedureType,
 }
 
-impl From<&Row> for ProcedureRow {
-    fn from(row: &Row) -> Self {
+impl From<Row> for ProcedureRow {
+    fn from(row: Row) -> Self {
         let mut procedure = Self::default();
 
-        if let Some(id) = row.cols.get(0) {
+        if let Some(id) = row.get_col(0) {
             procedure.id = id.to_string();
             procedure.procedure_type = id.into();
         }
 
-        if let Some(name) = row.cols.get(1) {
+        if let Some(name) = row.get_col(1) {
             procedure.name = name.to_string();
         }
 
-        if let Some(desc) = row.cols.get(2) {
+        if let Some(desc) = row.get_col(2) {
             procedure.description = desc
                 .to_string()
                 .split("\n")
@@ -211,20 +213,29 @@ impl From<&Row> for ProcedureRow {
 #[derive(Default, Debug)]
 pub struct ProceduresTable(pub Vec<ProcedureRow>);
 
+impl IntoIterator for ProceduresTable {
+    type Item = ProcedureRow;
+    type IntoIter = std::vec::IntoIter<ProcedureRow>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        return self.0.into_iter();
+    }
+}
+
 impl From<Table> for ProceduresTable {
     fn from(table: Table) -> Self {
-        return Self(table.rows.iter().map(ProcedureRow::from).collect());
+        return Self(table.into_iter().map(ProcedureRow::from).collect());
     }
 }
 
 impl From<Table> for Option<ProceduresTable> {
     fn from(table: Table) -> Self {
-        if table.rows.is_empty() {
+        if table.is_empty() {
             return None;
         }
 
         return Some(ProceduresTable(
-            table.rows.iter().map(ProcedureRow::from).collect(),
+            table.into_iter().map(ProcedureRow::from).collect(),
         ));
     }
 }
@@ -241,19 +252,19 @@ impl From<Row> for DetectionRow {
     fn from(row: Row) -> Self {
         let mut detection = Self::default();
 
-        if let Some(id) = row.cols.get(0) {
+        if let Some(id) = row.get_col(0) {
             detection.id = id.to_string();
         }
 
-        if let Some(data_source) = row.cols.get(1) {
+        if let Some(data_source) = row.get_col(1) {
             detection.data_source = data_source.to_string();
         }
 
-        if let Some(data_comp) = row.cols.get(2) {
+        if let Some(data_comp) = row.get_col(2) {
             detection.data_comp = data_comp.to_string();
         }
 
-        if let Some(detects) = row.cols.get(3) {
+        if let Some(detects) = row.get_col(3) {
             detection.detects = Some(remove_ext_link_ref(detects.trim()));
         }
 
@@ -264,9 +275,18 @@ impl From<Row> for DetectionRow {
 #[derive(Debug, Default)]
 pub struct DetectionsTable(pub Vec<DetectionRow>);
 
+impl IntoIterator for DetectionsTable {
+    type Item = DetectionRow;
+    type IntoIter = std::vec::IntoIter<DetectionRow>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        return self.0.into_iter();
+    }
+}
+
 impl From<Table> for Option<DetectionsTable> {
     fn from(table: Table) -> Self {
-        if table.rows.is_empty() {
+        if table.is_empty() {
             return None;
         }
 
@@ -275,7 +295,7 @@ impl From<Table> for Option<DetectionsTable> {
         let mut base_data_source = String::new();
         let detection = RefCell::new(DetectionRow::default());
 
-        for row in table.rows {
+        for row in table {
             if !row.cols[0].is_empty() {
                 base_id = row.cols[0].clone();
             }
@@ -309,13 +329,11 @@ impl<S: WebFetch> AttackService<S> {
     pub fn get_techniques(&self, technique_type: Domain) -> Result<TechniquesTable, error::Error> {
         let fetched_response = self.req_client.fetch(technique_type.into())?;
         let document = Document::from(fetched_response.as_str());
-        let data = self.scrape_tables(&document);
 
-        if let Some(table) = data.get(0) {
-            return Ok(table.into());
-        }
-
-        return Ok(TechniquesTable::default());
+        return Ok(self
+            .scrape_tables(&document)
+            .pop()
+            .map_or(TechniquesTable::default(), |table| table.into()));
     }
 
     pub fn get_technique(&self, technique_id: &str) -> Result<Technique, error::Error> {
@@ -364,19 +382,19 @@ pub mod domain {
         pub used_for: String,
     }
 
-    impl From<&Row> for DomainSubTechniqueRow {
-        fn from(row: &Row) -> Self {
+    impl From<Row> for DomainSubTechniqueRow {
+        fn from(row: Row) -> Self {
             let mut sub_technique = Self::default();
 
-            if let Some(id) = row.cols.get(2) {
+            if let Some(id) = row.get_col(2) {
                 sub_technique.id = id.to_string();
             }
 
-            if let Some(name) = row.cols.get(3) {
+            if let Some(name) = row.get_col(3) {
                 sub_technique.name = name.to_string();
             }
 
-            if let Some(used_for) = row.cols.get(4) {
+            if let Some(used_for) = row.get_col(4) {
                 sub_technique.used_for = remove_ext_link_ref(&used_for);
             }
 
@@ -403,34 +421,34 @@ pub mod domain {
         }
     }
 
-    impl From<&Row> for DomainTechniqueRow {
-        fn from(row: &Row) -> Self {
+    impl From<Row> for DomainTechniqueRow {
+        fn from(row: Row) -> Self {
             let mut technique = Self::default();
             let mut inx = 0;
 
-            if let Some(domain) = row.cols.get(inx) {
+            if let Some(domain) = row.get_col(inx) {
                 technique.domain = domain.to_string();
                 inx += 1;
             }
 
-            if let Some(id) = row.cols.get(inx) {
+            if let Some(id) = row.get_col(inx) {
                 technique.id = id.to_string();
                 inx += 1;
             }
 
-            if let Some(sub_id) = row.cols.get(inx) {
+            if let Some(sub_id) = row.get_col(inx) {
                 if sub_id.starts_with(".") {
                     technique.id = format!("{}{}", technique.id, sub_id);
                     inx += 1;
                 }
             }
 
-            if let Some(name) = row.cols.get(inx) {
+            if let Some(name) = row.get_col(inx) {
                 technique.name = name.to_string();
                 inx += 1;
             }
 
-            if let Some(used_for) = row.cols.get(inx) {
+            if let Some(used_for) = row.get_col(inx) {
                 technique.used_for = remove_ext_link_ref(&used_for);
             }
 
@@ -449,9 +467,14 @@ pub mod domain {
         pub fn len(&self) -> usize {
             return self.0.len();
         }
+    }
 
-        pub fn iter(&self) -> std::slice::Iter<DomainTechniqueRow> {
-            return self.0.iter();
+    impl IntoIterator for DomainTechniquesTable {
+        type Item = DomainTechniqueRow;
+        type IntoIter = std::vec::IntoIter<DomainTechniqueRow>;
+
+        fn into_iter(self) -> Self::IntoIter {
+            return self.0.into_iter();
         }
     }
 
@@ -460,7 +483,7 @@ pub mod domain {
             let mut retrieved_techniques: Vec<Rc<RefCell<DomainTechniqueRow>>> = Vec::new();
             let mut technique: Rc<RefCell<DomainTechniqueRow>> = Rc::default();
 
-            for row in table.rows.iter() {
+            for row in table {
                 if !row.cols[0].is_empty() {
                     technique = Rc::new(RefCell::new(DomainTechniqueRow::from(row)));
                     retrieved_techniques.push(Rc::clone(&technique));
@@ -473,7 +496,7 @@ pub mod domain {
 
             return Self(
                 retrieved_techniques
-                    .iter()
+                    .into_iter()
                     .map(|technique| technique.take())
                     .collect(),
             );
@@ -482,7 +505,7 @@ pub mod domain {
 
     impl From<Table> for Option<DomainTechniquesTable> {
         fn from(table: Table) -> Self {
-            if table.rows.is_empty() {
+            if table.is_empty() {
                 return None;
             }
 
@@ -531,7 +554,7 @@ mod tests {
 
         let fetched_sub_techniques = AttackService::new(fake_reqwest)
             .get_techniques(Domain::ENTERPRISE)?
-            .iter()
+            .into_iter()
             .filter(|technique| technique.sub_techniques.is_some())
             .map(|technique| technique.sub_techniques.as_ref().unwrap().len())
             .reduce(|accum, len| accum + len)
@@ -565,7 +588,7 @@ mod tests {
 
         let fetched_sub_techniques = AttackService::new(fake_reqwest)
             .get_techniques(Domain::MOBILE)?
-            .iter()
+            .into_iter()
             .filter(|technique| technique.sub_techniques.is_some())
             .map(|technique| technique.sub_techniques.as_ref().unwrap().len())
             .reduce(|accum, len| accum + len)
@@ -595,7 +618,7 @@ mod tests {
 
         let fetched_sub_techniques = AttackService::new(fake_reqwest)
             .get_techniques(Domain::ICS)?
-            .iter()
+            .into_iter()
             .filter(|technique| technique.sub_techniques.is_some())
             .map(|technique| technique.sub_techniques.as_ref().unwrap().len())
             .reduce(|accum, len| accum + len);

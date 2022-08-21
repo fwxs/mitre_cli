@@ -32,6 +32,15 @@ pub struct MitigationRow {
 #[derive(Default, Debug)]
 pub struct MitigationTable(pub Vec<MitigationRow>);
 
+impl IntoIterator for MitigationTable {
+    type Item = MitigationRow;
+    type IntoIter = std::vec::IntoIter<MitigationRow>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        return self.0.into_iter();
+    }
+}
+
 impl MitigationTable {
     pub fn is_empty(&self) -> bool {
         return self.0.is_empty();
@@ -40,25 +49,21 @@ impl MitigationTable {
     pub fn len(&self) -> usize {
         return self.0.len();
     }
-
-    pub fn iter(&self) -> std::slice::Iter<MitigationRow> {
-        return self.0.iter();
-    }
 }
 
-impl From<&Row> for MitigationRow {
-    fn from(row: &Row) -> Self {
+impl From<Row> for MitigationRow {
+    fn from(row: Row) -> Self {
         let mut mitigation = Self::default();
 
-        if let Some(id) = row.cols.get(0) {
+        if let Some(id) = row.get_col(0) {
             mitigation.id = id.to_string();
         }
 
-        if let Some(name) = row.cols.get(1) {
+        if let Some(name) = row.get_col(1) {
             mitigation.name = name.to_string();
         }
 
-        if let Some(desc) = row.cols.get(2) {
+        if let Some(desc) = row.get_col(2) {
             mitigation.description = desc.to_string();
 
             if mitigation.description.contains("\n") {
@@ -75,20 +80,20 @@ impl From<&Row> for MitigationRow {
     }
 }
 
-impl From<&Table> for MitigationTable {
-    fn from(table: &Table) -> Self {
-        return Self(table.rows.iter().map(MitigationRow::from).collect());
+impl From<Table> for MitigationTable {
+    fn from(table: Table) -> Self {
+        return Self(table.into_iter().map(MitigationRow::from).collect());
     }
 }
 
 impl From<Table> for Option<MitigationTable> {
     fn from(table: Table) -> Self {
-        if table.rows.is_empty() {
+        if table.is_empty() {
             return None;
         }
 
         return Some(MitigationTable(
-            table.rows.iter().map(MitigationRow::from).collect(),
+            table.into_iter().map(MitigationRow::from).collect(),
         ));
     }
 }
@@ -108,13 +113,11 @@ impl<S: WebFetch> AttackService<S> {
     ) -> Result<MitigationTable, error::Error> {
         let fetched_response = self.req_client.fetch(mitigation_type.into())?;
         let document = Document::from(fetched_response.as_str());
-        let data = self.scrape_tables(&document);
 
-        if let Some(table) = data.get(0) {
-            return Ok(table.into());
-        }
-
-        return Ok(MitigationTable::default());
+        return Ok(self
+            .scrape_tables(&document)
+            .pop()
+            .map_or(MitigationTable::default(), |table| table.into()));
     }
 
     pub fn get_mitigation(&self, mitigation_id: &str) -> Result<Mitigation, error::Error> {

@@ -15,19 +15,19 @@ pub struct SubDetectionRow {
     pub detects: String,
 }
 
-impl From<&Row> for SubDetectionRow {
-    fn from(row: &Row) -> Self {
+impl From<Row> for SubDetectionRow {
+    fn from(row: Row) -> Self {
         let mut sub_detection = Self::default();
 
-        if let Some(id) = row.cols.get(2) {
+        if let Some(id) = row.get_col(2) {
             sub_detection.id = id.to_string();
         }
 
-        if let Some(name) = row.cols.get(3) {
+        if let Some(name) = row.get_col(3) {
             sub_detection.name = name.to_string();
         }
 
-        if let Some(desc) = row.cols.get(4) {
+        if let Some(desc) = row.get_col(4) {
             sub_detection.detects = remove_ext_link_ref(&desc);
         }
 
@@ -54,34 +54,34 @@ impl DetectionRow {
     }
 }
 
-impl From<&Row> for DetectionRow {
-    fn from(row: &Row) -> Self {
+impl From<Row> for DetectionRow {
+    fn from(row: Row) -> Self {
         let mut detection = Self::default();
         let mut inx = 0;
 
-        if let Some(domain) = row.cols.get(inx) {
+        if let Some(domain) = row.get_col(inx) {
             detection.domain = domain.to_string();
             inx += 1;
         }
 
-        if let Some(id) = row.cols.get(inx) {
+        if let Some(id) = row.get_col(inx) {
             detection.id = id.to_string();
             inx += 1;
         }
 
-        if let Some(sub_id) = row.cols.get(inx) {
+        if let Some(sub_id) = row.get_col(inx) {
             if sub_id.starts_with(".") {
                 detection.id = format!("{}{}", detection.id, sub_id);
                 inx += 1;
             }
         }
 
-        if let Some(name) = row.cols.get(inx) {
+        if let Some(name) = row.get_col(inx) {
             detection.name = name.to_string();
             inx += 1;
         }
 
-        if let Some(desc) = row.cols.get(inx) {
+        if let Some(desc) = row.get_col(inx) {
             detection.detects = remove_ext_link_ref(&desc);
         }
 
@@ -92,12 +92,21 @@ impl From<&Row> for DetectionRow {
 #[derive(Debug, Default)]
 pub struct DetectionsTable(pub Vec<DetectionRow>);
 
-impl From<&Table> for DetectionsTable {
-    fn from(table: &Table) -> Self {
+impl IntoIterator for DetectionsTable {
+    type Item = DetectionRow;
+    type IntoIter = std::vec::IntoIter<DetectionRow>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        return self.0.into_iter();
+    }
+}
+
+impl From<Table> for DetectionsTable {
+    fn from(table: Table) -> Self {
         let mut retrieved_detections: Vec<Rc<RefCell<DetectionRow>>> = Vec::new();
         let mut detection: Rc<RefCell<DetectionRow>> = Rc::default();
 
-        for row in table.rows.iter() {
+        for row in table {
             if !row.cols[0].is_empty() {
                 detection = Rc::new(RefCell::new(DetectionRow::from(row)));
                 retrieved_detections.push(Rc::clone(&detection));
@@ -110,7 +119,7 @@ impl From<&Table> for DetectionsTable {
 
         return Self(
             retrieved_detections
-                .iter()
+                .into_iter()
                 .map(|detection| detection.take())
                 .collect(),
         );
@@ -131,19 +140,19 @@ pub struct DataSourceRow {
     pub description: String,
 }
 
-impl From<&Row> for DataSourceRow {
-    fn from(row: &Row) -> Self {
+impl From<Row> for DataSourceRow {
+    fn from(row: Row) -> Self {
         let mut data_source = Self::default();
 
-        if let Some(id) = row.cols.get(0) {
+        if let Some(id) = row.get_col(0) {
             data_source.id = id.to_string();
         }
 
-        if let Some(name) = row.cols.get(1) {
+        if let Some(name) = row.get_col(1) {
             data_source.name = name.to_string();
         }
 
-        if let Some(desc) = row.cols.get(2) {
+        if let Some(desc) = row.get_col(2) {
             data_source.description = desc.to_string();
 
             if data_source.description.contains("\n") {
@@ -171,15 +180,20 @@ impl DataSourcesTable {
     pub fn len(&self) -> usize {
         return self.0.len();
     }
+}
 
-    pub fn iter(&self) -> std::slice::Iter<DataSourceRow> {
-        return self.0.iter();
+impl IntoIterator for DataSourcesTable {
+    type Item = DataSourceRow;
+    type IntoIter = std::vec::IntoIter<DataSourceRow>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        return self.0.into_iter();
     }
 }
 
-impl From<&Table> for DataSourcesTable {
-    fn from(table: &Table) -> Self {
-        return Self(table.rows.iter().map(DataSourceRow::from).collect());
+impl From<Table> for DataSourcesTable {
+    fn from(table: Table) -> Self {
+        return Self(table.into_iter().map(DataSourceRow::from).collect());
     }
 }
 
@@ -187,13 +201,11 @@ impl<S: WebFetch> AttackService<S> {
     pub fn get_data_sources(&self) -> Result<DataSourcesTable, error::Error> {
         let fetched_response = self.req_client.fetch(ATTCK_DATA_SOURCES_URL)?;
         let document = Document::from(fetched_response.as_str());
-        let data = self.scrape_tables(&document);
 
-        if let Some(table) = data.get(0) {
-            return Ok(table.into());
-        }
-
-        return Ok(DataSourcesTable::default());
+        return Ok(self
+            .scrape_tables(&document)
+            .pop()
+            .map_or(DataSourcesTable::default(), |table| table.into()));
     }
 
     pub fn get_data_source(
@@ -247,7 +259,7 @@ impl<S: WebFetch> AttackService<S> {
 
     fn get_data_components(&self, dt_comps: Vec<(String, String, Table)>) -> Vec<DataComponent> {
         return dt_comps
-            .iter()
+            .into_iter()
             .map(|(name, desc, table)| DataComponent {
                 name: name.clone(),
                 description: desc.clone(),
