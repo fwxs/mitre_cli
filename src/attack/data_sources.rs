@@ -1,5 +1,5 @@
-use super::{Row, Table};
-use crate::{attack::AttackService, error, remove_ext_link_ref, WebFetch};
+use super::{scrape_table, scrape_tables, Row, Table};
+use crate::{error, remove_ext_link_ref, WebFetch};
 use select::{
     document::Document,
     predicate::{self, Predicate},
@@ -7,6 +7,81 @@ use select::{
 use std::{cell::RefCell, rc::Rc};
 
 const ATTCK_DATA_SOURCES_URL: &'static str = "https://attack.mitre.org/datasources/";
+
+#[derive(Debug, Default)]
+pub struct DataSourceRow {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+}
+
+impl From<Row> for DataSourceRow {
+    fn from(row: Row) -> Self {
+        let mut data_source = Self::default();
+
+        if let Some(id) = row.get_col(0) {
+            data_source.id = id.to_string();
+        }
+
+        if let Some(name) = row.get_col(1) {
+            data_source.name = name.to_string();
+        }
+
+        if let Some(desc) = row.get_col(2) {
+            data_source.description = desc.to_string();
+
+            if data_source.description.contains("\n") {
+                data_source.description = data_source
+                    .description
+                    .split("\n")
+                    .map(|str_slice| str_slice.trim().to_string())
+                    .collect::<Vec<String>>()
+                    .join("\n");
+            }
+        }
+
+        return data_source;
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct DataSourcesTable(pub Vec<DataSourceRow>);
+
+impl DataSourcesTable {
+    pub fn is_empty(&self) -> bool {
+        return self.0.is_empty();
+    }
+
+    pub fn len(&self) -> usize {
+        return self.0.len();
+    }
+
+    pub fn fetch_data_sources(
+        web_client: &impl WebFetch,
+    ) -> Result<DataSourcesTable, error::Error> {
+        let fetched_response = web_client.fetch(ATTCK_DATA_SOURCES_URL)?;
+        let document = Document::from(fetched_response.as_str());
+
+        return Ok(scrape_tables(&document)
+            .pop()
+            .map_or(DataSourcesTable::default(), |table| table.into()));
+    }
+}
+
+impl IntoIterator for DataSourcesTable {
+    type Item = DataSourceRow;
+    type IntoIter = std::vec::IntoIter<DataSourceRow>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        return self.0.into_iter();
+    }
+}
+
+impl From<Table> for DataSourcesTable {
+    fn from(table: Table) -> Self {
+        return Self(table.into_iter().map(DataSourceRow::from).collect());
+    }
+}
 
 #[derive(Debug, Default)]
 pub struct SubDetectionRow {
@@ -133,98 +208,24 @@ pub struct DataComponent {
     pub detections: DetectionsTable,
 }
 
-#[derive(Debug, Default)]
-pub struct DataSourceRow {
-    pub id: String,
-    pub name: String,
-    pub description: String,
-}
-
-impl From<Row> for DataSourceRow {
-    fn from(row: Row) -> Self {
-        let mut data_source = Self::default();
-
-        if let Some(id) = row.get_col(0) {
-            data_source.id = id.to_string();
-        }
-
-        if let Some(name) = row.get_col(1) {
-            data_source.name = name.to_string();
-        }
-
-        if let Some(desc) = row.get_col(2) {
-            data_source.description = desc.to_string();
-
-            if data_source.description.contains("\n") {
-                data_source.description = data_source
-                    .description
-                    .split("\n")
-                    .map(|str_slice| str_slice.trim().to_string())
-                    .collect::<Vec<String>>()
-                    .join("\n");
-            }
-        }
-
-        return data_source;
-    }
-}
-
-#[derive(Debug, Default)]
-pub struct DataSourcesTable(pub Vec<DataSourceRow>);
-
-impl DataSourcesTable {
-    pub fn is_empty(&self) -> bool {
-        return self.0.is_empty();
-    }
-
-    pub fn len(&self) -> usize {
-        return self.0.len();
-    }
-}
-
-impl IntoIterator for DataSourcesTable {
-    type Item = DataSourceRow;
-    type IntoIter = std::vec::IntoIter<DataSourceRow>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        return self.0.into_iter();
-    }
-}
-
-impl From<Table> for DataSourcesTable {
-    fn from(table: Table) -> Self {
-        return Self(table.into_iter().map(DataSourceRow::from).collect());
-    }
-}
-
-impl<S: WebFetch> AttackService<S> {
-    pub fn get_data_sources(&self) -> Result<DataSourcesTable, error::Error> {
-        let fetched_response = self.req_client.fetch(ATTCK_DATA_SOURCES_URL)?;
-        let document = Document::from(fetched_response.as_str());
-
-        return Ok(self
-            .scrape_tables(&document)
-            .pop()
-            .map_or(DataSourcesTable::default(), |table| table.into()));
-    }
-
-    pub fn get_data_source(
-        &self,
+impl DataComponent {
+    pub fn fetch_data_source(
         data_source_id: &str,
+        web_client: &impl WebFetch,
     ) -> Result<Vec<DataComponent>, error::Error> {
         let url = format!(
             "{}{}",
             ATTCK_DATA_SOURCES_URL,
             data_source_id.to_uppercase()
         );
-        let fetched_response = self.req_client.fetch(url.as_str())?;
+        let fetched_response = web_client.fetch(url.as_str())?;
         let document = Document::from(fetched_response.as_str());
-        let dt_tables = self.scrape_datasource_tables(&document);
+        let dt_tables = DataComponent::scrape_datasource_tables(&document);
 
-        return Ok(self.get_data_components(dt_tables));
+        return Ok(DataComponent::get_data_components(dt_tables));
     }
 
-    fn scrape_datasource_tables<'a>(&self, document: &'a Document) -> Vec<(String, String, Table)> {
+    fn scrape_datasource_tables<'a>(document: &'a Document) -> Vec<(String, String, Table)> {
         let mut dt_tables: Vec<(String, String, Table)> = Vec::new();
         let name = Rc::new(RefCell::new(String::new()));
         let description = Rc::new(RefCell::new(String::new()));
@@ -249,7 +250,7 @@ impl<S: WebFetch> AttackService<S> {
             } else if node.name() == Some("p") {
                 description.replace(node.text());
             } else if node.name() == Some("table") {
-                let table = self.scrape_table(node);
+                let table = scrape_table(node);
                 dt_tables.push((name.take(), description.take(), table));
             }
         }
@@ -257,7 +258,7 @@ impl<S: WebFetch> AttackService<S> {
         return dt_tables;
     }
 
-    fn get_data_components(&self, dt_comps: Vec<(String, String, Table)>) -> Vec<DataComponent> {
+    fn get_data_components(dt_comps: Vec<(String, String, Table)>) -> Vec<DataComponent> {
         return dt_comps
             .into_iter()
             .map(|(name, desc, table)| DataComponent {
@@ -286,7 +287,7 @@ mod tests {
             include_str!("html/attck/data_sources/data_sources.html").to_string(),
         );
 
-        let retrieved_data_source = AttackService::new(fake_reqwest).get_data_sources()?;
+        let retrieved_data_source = DataSourcesTable::fetch_data_sources(&fake_reqwest)?;
 
         assert_eq!(
             retrieved_data_source.is_empty(),
@@ -306,7 +307,7 @@ mod tests {
         );
 
         let retrieved_data_comp =
-            AttackService::new(fake_reqwest).get_data_source(TEST_DATA_SOURCE)?;
+            DataComponent::fetch_data_source(TEST_DATA_SOURCE, &fake_reqwest)?;
 
         assert_eq!(retrieved_data_comp.len(), TEST_DATA_COMPONENTS);
 

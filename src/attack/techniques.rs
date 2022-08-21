@@ -3,9 +3,12 @@ use std::rc::Rc;
 
 use select::document::Document;
 
-use crate::{attack::AttackService, error, remove_ext_link_ref, WebFetch};
+use crate::{error, remove_ext_link_ref, WebFetch};
 
-use super::{mitigations::MitigationTable, Row, Table};
+use super::{
+    mitigations::MitigationTable, scrape_entity_description, scrape_entity_h2_tables,
+    scrape_entity_name, scrape_tables, Row, Table,
+};
 
 const TECHNIQUES_URL: &'static str = "https://attack.mitre.org/techniques/";
 
@@ -111,12 +114,6 @@ impl From<Row> for TechniqueRow {
 #[derive(Default, Debug)]
 pub struct TechniquesTable(pub Vec<TechniqueRow>);
 
-impl TechniquesTable {
-    pub fn len(&self) -> usize {
-        return self.0.len();
-    }
-}
-
 impl IntoIterator for TechniquesTable {
     type Item = TechniqueRow;
     type IntoIter = std::vec::IntoIter<TechniqueRow>;
@@ -148,6 +145,24 @@ impl From<Table> for TechniquesTable {
                 .map(|technique| technique.take())
                 .collect(),
         );
+    }
+}
+
+impl TechniquesTable {
+    pub fn len(&self) -> usize {
+        return self.0.len();
+    }
+
+    pub fn fetch_techniques(
+        technique_type: Domain,
+        web_client: &impl WebFetch,
+    ) -> Result<TechniquesTable, error::Error> {
+        let fetched_response = web_client.fetch(technique_type.into())?;
+        let document = Document::from(fetched_response.as_str());
+
+        return Ok(scrape_tables(&document)
+            .pop()
+            .map_or(TechniquesTable::default(), |table| table.into()));
     }
 }
 
@@ -325,27 +340,20 @@ pub struct Technique {
     pub detections: Option<DetectionsTable>,
 }
 
-impl<S: WebFetch> AttackService<S> {
-    pub fn get_techniques(&self, technique_type: Domain) -> Result<TechniquesTable, error::Error> {
-        let fetched_response = self.req_client.fetch(technique_type.into())?;
-        let document = Document::from(fetched_response.as_str());
-
-        return Ok(self
-            .scrape_tables(&document)
-            .pop()
-            .map_or(TechniquesTable::default(), |table| table.into()));
-    }
-
-    pub fn get_technique(&self, technique_id: &str) -> Result<Technique, error::Error> {
+impl Technique {
+    pub fn fetch_technique(
+        technique_id: &str,
+        web_client: &impl WebFetch,
+    ) -> Result<Technique, error::Error> {
         let url = format!("{}{}", TECHNIQUES_URL, technique_id.to_uppercase());
-        let fetched_response = self.req_client.fetch(url.as_str())?;
+        let fetched_response = web_client.fetch(url.as_str())?;
         let document = Document::from(fetched_response.as_str());
-        let mut tables = self.scrape_entity_h2_tables(&document);
+        let mut tables = scrape_entity_h2_tables(&document);
 
         let technique = Technique {
             id: technique_id.to_string(),
-            name: self.scrape_entity_name(&document),
-            description: self.scrape_entity_description(&document),
+            name: scrape_entity_name(&document),
+            description: scrape_entity_description(&document),
             procedures: if let Some(examples_table) = tables.remove("examples") {
                 examples_table.into()
             } else {
@@ -539,7 +547,7 @@ mod tests {
         );
 
         let retrieved_techniques =
-            AttackService::new(fake_reqwest).get_techniques(Domain::ENTERPRISE)?;
+            TechniquesTable::fetch_techniques(Domain::ENTERPRISE, &fake_reqwest)?;
 
         assert_eq!(retrieved_techniques.len(), SCRAPED_ENTERPRISE_ROWS);
 
@@ -552,13 +560,13 @@ mod tests {
             include_str!("html/attck/techniques/enterprise.html").to_string(),
         );
 
-        let fetched_sub_techniques = AttackService::new(fake_reqwest)
-            .get_techniques(Domain::ENTERPRISE)?
-            .into_iter()
-            .filter(|technique| technique.sub_techniques.is_some())
-            .map(|technique| technique.sub_techniques.as_ref().unwrap().len())
-            .reduce(|accum, len| accum + len)
-            .unwrap();
+        let fetched_sub_techniques =
+            TechniquesTable::fetch_techniques(Domain::ENTERPRISE, &fake_reqwest)?
+                .into_iter()
+                .filter(|technique| technique.sub_techniques.is_some())
+                .map(|technique| technique.sub_techniques.as_ref().unwrap().len())
+                .reduce(|accum, len| accum + len)
+                .unwrap();
 
         assert_eq!(
             fetched_sub_techniques,
@@ -574,7 +582,7 @@ mod tests {
             .set_success_response(include_str!("html/attck/techniques/mobile.html").to_string());
 
         let retrieved_techniques =
-            AttackService::new(fake_reqwest).get_techniques(Domain::MOBILE)?;
+            TechniquesTable::fetch_techniques(Domain::MOBILE, &fake_reqwest)?;
 
         assert_eq!(retrieved_techniques.len(), SCRAPED_MOBILE_ROWS);
 
@@ -586,13 +594,13 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/techniques/mobile.html").to_string());
 
-        let fetched_sub_techniques = AttackService::new(fake_reqwest)
-            .get_techniques(Domain::MOBILE)?
-            .into_iter()
-            .filter(|technique| technique.sub_techniques.is_some())
-            .map(|technique| technique.sub_techniques.as_ref().unwrap().len())
-            .reduce(|accum, len| accum + len)
-            .unwrap();
+        let fetched_sub_techniques =
+            TechniquesTable::fetch_techniques(Domain::MOBILE, &fake_reqwest)?
+                .into_iter()
+                .filter(|technique| technique.sub_techniques.is_some())
+                .map(|technique| technique.sub_techniques.as_ref().unwrap().len())
+                .reduce(|accum, len| accum + len)
+                .unwrap();
 
         assert_eq!(fetched_sub_techniques, SCRAPED_SUB_TECHINQUES_MOBILE_ROWS);
 
@@ -604,7 +612,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/techniques/ics.html").to_string());
 
-        let retrieved_techniques = AttackService::new(fake_reqwest).get_techniques(Domain::ICS)?;
+        let retrieved_techniques = TechniquesTable::fetch_techniques(Domain::ICS, &fake_reqwest)?;
 
         assert_eq!(retrieved_techniques.len(), SCRAPED_ICS_ROWS);
 
@@ -616,8 +624,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/techniques/ics.html").to_string());
 
-        let fetched_sub_techniques = AttackService::new(fake_reqwest)
-            .get_techniques(Domain::ICS)?
+        let fetched_sub_techniques = TechniquesTable::fetch_techniques(Domain::ICS, &fake_reqwest)?
             .into_iter()
             .filter(|technique| technique.sub_techniques.is_some())
             .map(|technique| technique.sub_techniques.as_ref().unwrap().len())
@@ -633,8 +640,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default().set_success_response(
             include_str!("html/attck/techniques/enterprise_deploy_container.html").to_string(),
         );
-        let fetched_technique =
-            AttackService::new(fake_reqwest).get_technique(TEST_TECHNIQUE_ID)?;
+        let fetched_technique = Technique::fetch_technique(TEST_TECHNIQUE_ID, &fake_reqwest)?;
 
         assert!(
             fetched_technique.procedures.is_some(),
@@ -671,8 +677,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default().set_success_response(
             include_str!("html/attck/techniques/enterprise_parent_pid_spoofing.html").to_string(),
         );
-        let fetched_sub_techniques =
-            AttackService::new(fake_reqwest).get_technique(TEST_TECHNIQUE_ID)?;
+        let fetched_sub_techniques = Technique::fetch_technique(TEST_TECHNIQUE_ID, &fake_reqwest)?;
 
         assert!(
             fetched_sub_techniques.procedures.is_some(),

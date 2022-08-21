@@ -1,8 +1,11 @@
 use select::document::Document;
 
-use crate::{error::Error, WebFetch};
+use crate::WebFetch;
 
-use super::{techniques::TechniquesTable, AttackService, Row, Table};
+use super::{
+    scrape_entity_description, scrape_entity_name, scrape_tables, techniques::TechniquesTable, Row,
+    Table,
+};
 
 const TACTICS_URL: &'static str = "https://attack.mitre.org/tactics/";
 
@@ -59,7 +62,7 @@ impl From<Row> for TacticRow {
 }
 
 #[derive(Default, Debug)]
-pub struct TacticsTable (pub Vec<TacticRow>);
+pub struct TacticsTable(pub Vec<TacticRow>);
 
 impl IntoIterator for TacticsTable {
     type Item = TacticRow;
@@ -67,6 +70,12 @@ impl IntoIterator for TacticsTable {
 
     fn into_iter(self) -> Self::IntoIter {
         return self.0.into_iter();
+    }
+}
+
+impl From<Table> for TacticsTable {
+    fn from(table: Table) -> Self {
+        return Self(table.into_iter().map(TacticRow::from).collect());
     }
 }
 
@@ -78,11 +87,19 @@ impl TacticsTable {
     pub fn is_empty(&self) -> bool {
         return self.0.is_empty();
     }
-}
 
-impl From<Table> for TacticsTable {
-    fn from(table: Table) -> Self {
-        return Self (table.into_iter().map(TacticRow::from).collect());
+    pub fn fetch_tactics(
+        tactic_type: Domain,
+        req_client: &impl WebFetch,
+    ) -> Result<Self, crate::error::Error> {
+        let fetched_response = req_client.fetch(tactic_type.into())?;
+        let document = Document::from(fetched_response.as_str());
+
+        return Ok(scrape_tables(&document)
+            .pop()
+            .map_or(TacticsTable::default(), |scrapped_table| {
+                scrapped_table.into()
+            }));
     }
 }
 
@@ -94,37 +111,23 @@ pub struct Tactic {
     pub techniques: Option<TechniquesTable>,
 }
 
-impl<S: WebFetch> AttackService<S> {
-    pub fn get_tactics(&self, tactic_type: Domain) -> Result<TacticsTable, Error> {
-        let fetched_response = self.req_client.fetch(tactic_type.into())?;
-        let document = Document::from(fetched_response.as_str());
-
-        return Ok(self
-            .scrape_tables(&document)
-            .pop()
-            .map_or(TacticsTable::default(), |scrapped_table| {
-                scrapped_table.into()
-            }));
-    }
-
-    pub fn get_tactic(&self, tactic_id: &str) -> Result<Tactic, Error> {
+impl Tactic {
+    pub fn fetch_tactic(
+        tactic_id: &str,
+        req_client: &impl WebFetch,
+    ) -> Result<Tactic, crate::error::Error> {
         let url = format!("{}{}", TACTICS_URL, tactic_id.to_uppercase());
-        let fetched_response = self.req_client.fetch(url.as_str())?;
+        let fetched_response = req_client.fetch(&url)?;
         let document = Document::from(fetched_response.as_str());
 
         return Ok(Tactic {
             id: tactic_id.to_uppercase(),
-            name: self.scrape_entity_name(&document),
-            description: self.scrape_entity_description(&document),
-            techniques: self.scrape_tactic_techniques(&document),
+            name: scrape_entity_name(&document),
+            description: scrape_entity_description(&document),
+            techniques: scrape_tables(&document)
+                .pop()
+                .map_or(None, |table| Some(table.into())),
         });
-    }
-
-    fn scrape_tactic_techniques(&self, document: &Document) -> Option<TechniquesTable> {
-        return self
-            .scrape_tables(&document)
-            .pop()
-            .map_or(None, |table| Some(table.into()));
     }
 }
 
@@ -142,11 +145,11 @@ mod tests {
     const SCRAPED_ICS_ROWS: usize = 12;
 
     #[test]
-    fn test_fetch_enterprise_tactics_html() -> Result<(), super::Error> {
-        let fake_reqwest = FakeHttpReqwest::default()
+    fn test_fetch_enterprise_tactics_html() -> Result<(), crate::error::Error> {
+        let fake_reqwest_client = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/tactics/enterprise.html").to_string());
         let retrieved_tactics =
-            AttackService::<FakeHttpReqwest>::new(fake_reqwest).get_tactics(Domain::ENTERPRISE)?;
+            TacticsTable::fetch_tactics(Domain::ENTERPRISE, &fake_reqwest_client)?;
 
         assert_eq!(
             retrieved_tactics.is_empty(),
@@ -161,11 +164,10 @@ mod tests {
     }
 
     #[test]
-    fn test_fetch_mobile_tactics_html() -> Result<(), super::Error> {
-        let fake_reqwest = FakeHttpReqwest::default()
+    fn test_fetch_mobile_tactics_html() -> Result<(), crate::error::Error> {
+        let fake_reqwest_client = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/tactics/mobile.html").to_string());
-        let retrieved_tactics =
-            AttackService::<FakeHttpReqwest>::new(fake_reqwest).get_tactics(Domain::MOBILE)?;
+        let retrieved_tactics = TacticsTable::fetch_tactics(Domain::MOBILE, &fake_reqwest_client)?;
 
         assert_eq!(
             retrieved_tactics.is_empty(),
@@ -179,11 +181,10 @@ mod tests {
     }
 
     #[test]
-    fn test_fetch_ics_tactics_html() -> Result<(), super::Error> {
-        let fake_reqwest = FakeHttpReqwest::default()
+    fn test_fetch_ics_tactics_html() -> Result<(), crate::error::Error> {
+        let fake_reqwest_client = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/tactics/ics.html").to_string());
-        let retrieved_tactics =
-            AttackService::<FakeHttpReqwest>::new(fake_reqwest).get_tactics(Domain::ICS)?;
+        let retrieved_tactics = TacticsTable::fetch_tactics(Domain::ICS, &fake_reqwest_client)?;
 
         assert_eq!(
             retrieved_tactics.is_empty(),
@@ -198,22 +199,20 @@ mod tests {
 
     #[test]
     fn test_dont_panic_on_request_error() {
-        let fake_reqwest = FakeHttpReqwest::default()
-            .set_error_response(Error::RequestError(format!("Reqwest error")));
-        let error: Error = AttackService::<FakeHttpReqwest>::new(fake_reqwest)
-            .get_tactics(Domain::ENTERPRISE)
-            .unwrap_err();
+        let fake_reqwest_client = FakeHttpReqwest::default()
+            .set_error_response(crate::error::Error::RequestError(format!("Reqwest error")));
+        let error: crate::error::Error =
+            TacticsTable::fetch_tactics(Domain::ENTERPRISE, &fake_reqwest_client).unwrap_err();
 
-        assert!(matches!(error, Error::RequestError(_)));
+        assert!(matches!(error, crate::error::Error::RequestError(_)));
     }
 
     #[test]
-    fn test_retrieve_enterprise_tactic_info() -> Result<(), super::Error> {
-        let fake_reqwest = FakeHttpReqwest::default().set_success_response(
+    fn test_retrieve_enterprise_tactic_info() -> Result<(), crate::error::Error> {
+        let fake_reqwest_client = FakeHttpReqwest::default().set_success_response(
             include_str!("html/attck/tactics/initial_access.html").to_string(),
         );
-        let retrieved_tactic: Tactic =
-            AttackService::<FakeHttpReqwest>::new(fake_reqwest).get_tactic(TEST_TACTIC_ID)?;
+        let retrieved_tactic = Tactic::fetch_tactic(TEST_TACTIC_ID, &fake_reqwest_client)?;
 
         assert!(
             retrieved_tactic.techniques.is_some(),

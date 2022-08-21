@@ -1,8 +1,11 @@
 use select::document::Document;
 
-use crate::{attack::AttackService, error, WebFetch};
+use crate::{error, WebFetch};
 
-use super::{techniques::domain::DomainTechniquesTable, Row, Table};
+use super::{
+    scrape_entity_description, scrape_entity_h2_tables, scrape_entity_name, scrape_tables,
+    techniques::domain::DomainTechniquesTable, Row, Table,
+};
 
 const ATTCK_SOFTWARE_URL: &'static str = "https://attack.mitre.org/software/";
 
@@ -57,6 +60,15 @@ impl SoftwareTable {
 
     pub fn len(&self) -> usize {
         return self.0.len();
+    }
+
+    pub fn fetch_software(web_client: &impl WebFetch) -> Result<SoftwareTable, error::Error> {
+        let fetched_response = web_client.fetch(ATTCK_SOFTWARE_URL)?;
+        let document = Document::from(fetched_response.as_str());
+
+        return Ok(scrape_tables(&document)
+            .pop()
+            .map_or(SoftwareTable::default(), |table| table.into()));
     }
 }
 
@@ -134,26 +146,19 @@ pub struct Software {
     pub groups: Option<AssocGroupsTable>,
 }
 
-impl<S: WebFetch> AttackService<S> {
-    pub fn get_software(&self) -> Result<SoftwareTable, error::Error> {
-        let fetched_response = self.req_client.fetch(ATTCK_SOFTWARE_URL)?;
+impl Software {
+    pub fn fetch_software_info(
+        software_id: &str,
+        web_client: &impl WebFetch,
+    ) -> Result<Software, crate::error::Error> {
+        let fetched_response =
+            web_client.fetch(format!("{}{}", ATTCK_SOFTWARE_URL, software_id).as_str())?;
         let document = Document::from(fetched_response.as_str());
-        return Ok(self
-            .scrape_tables(&document)
-            .pop()
-            .map_or(SoftwareTable::default(), |table| table.into()));
-    }
-
-    pub fn get_software_info(&self, group_id: &str) -> Result<Software, error::Error> {
-        let fetched_response = self
-            .req_client
-            .fetch(format!("{}{}", ATTCK_SOFTWARE_URL, group_id).as_str())?;
-        let document = Document::from(fetched_response.as_str());
-        let mut tables = self.scrape_entity_h2_tables(&document);
+        let mut tables = scrape_entity_h2_tables(&document);
         let software = Software {
-            id: group_id.to_string(),
-            name: self.scrape_entity_name(&document),
-            desc: self.scrape_entity_description(&document),
+            id: software_id.to_string(),
+            name: scrape_entity_name(&document),
+            desc: scrape_entity_description(&document),
             techniques: if let Some(techniques_table) = tables.remove("techniques") {
                 techniques_table.into()
             } else {
@@ -184,7 +189,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/software/software.html").to_string());
 
-        let retrieved_software = AttackService::new(fake_reqwest).get_software()?;
+        let retrieved_software = SoftwareTable::fetch_software(&fake_reqwest)?;
 
         assert_eq!(
             retrieved_software.is_empty(),
@@ -202,8 +207,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/software/psexec.html").to_string());
 
-        let retrieved_software =
-            AttackService::new(fake_reqwest).get_software_info(TEST_SOFTWARE_ID)?;
+        let retrieved_software = Software::fetch_software_info(TEST_SOFTWARE_ID, &fake_reqwest)?;
 
         assert_ne!(
             retrieved_software.techniques.is_none(),

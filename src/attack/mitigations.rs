@@ -1,8 +1,11 @@
 use select::document::Document;
 
-use crate::{attack::AttackService, error, WebFetch};
+use crate::{error, WebFetch};
 
-use super::{techniques::domain::DomainTechniquesTable, Row, Table};
+use super::{
+    scrape_entity_description, scrape_entity_h2_tables, scrape_entity_name, scrape_tables,
+    techniques::domain::DomainTechniquesTable, Row, Table,
+};
 
 const ATTCK_MITIGATION_URL: &'static str = "https://attack.mitre.org/mitigations/";
 
@@ -48,6 +51,18 @@ impl MitigationTable {
 
     pub fn len(&self) -> usize {
         return self.0.len();
+    }
+
+    pub fn fetch_mitigations(
+        mitigation_type: Domain,
+        web_client: &impl WebFetch,
+    ) -> Result<MitigationTable, error::Error> {
+        let fetched_response = web_client.fetch(mitigation_type.into())?;
+        let document = Document::from(fetched_response.as_str());
+
+        return Ok(scrape_tables(&document)
+            .pop()
+            .map_or(MitigationTable::default(), |table| table.into()));
     }
 }
 
@@ -106,30 +121,19 @@ pub struct Mitigation {
     pub addressed_techniques: Option<DomainTechniquesTable>,
 }
 
-impl<S: WebFetch> AttackService<S> {
-    pub fn get_mitigations(
-        &self,
-        mitigation_type: Domain,
-    ) -> Result<MitigationTable, error::Error> {
-        let fetched_response = self.req_client.fetch(mitigation_type.into())?;
+impl Mitigation {
+    pub fn fetch_mitigation(
+        mitigation_id: &str,
+        web_client: &impl WebFetch,
+    ) -> Result<Mitigation, error::Error> {
+        let fetched_response =
+            web_client.fetch(format!("{}{}", ATTCK_MITIGATION_URL, mitigation_id).as_str())?;
         let document = Document::from(fetched_response.as_str());
-
-        return Ok(self
-            .scrape_tables(&document)
-            .pop()
-            .map_or(MitigationTable::default(), |table| table.into()));
-    }
-
-    pub fn get_mitigation(&self, mitigation_id: &str) -> Result<Mitigation, error::Error> {
-        let fetched_response = self
-            .req_client
-            .fetch(format!("{}{}", ATTCK_MITIGATION_URL, mitigation_id).as_str())?;
-        let document = Document::from(fetched_response.as_str());
-        let mut tables = self.scrape_entity_h2_tables(&document);
+        let mut tables = scrape_entity_h2_tables(&document);
         let mitigation = Mitigation {
             id: mitigation_id.to_string(),
-            name: self.scrape_entity_name(&document),
-            desc: self.scrape_entity_description(&document),
+            name: scrape_entity_name(&document),
+            desc: scrape_entity_description(&document),
             addressed_techniques: if let Some(techniques_table) = tables.remove("techniques") {
                 techniques_table.into()
             } else {
@@ -159,7 +163,7 @@ mod tests {
         );
 
         let retrieved_mitigations =
-            AttackService::new(fake_reqwest).get_mitigations(Domain::ENTERPRISE)?;
+            MitigationTable::fetch_mitigations(Domain::ENTERPRISE, &fake_reqwest)?;
 
         assert_eq!(
             retrieved_mitigations.is_empty(),
@@ -177,7 +181,7 @@ mod tests {
             .set_success_response(include_str!("html/attck/mitigations/mobile.html").to_string());
 
         let retrieved_mitigations =
-            AttackService::new(fake_reqwest).get_mitigations(Domain::MOBILE)?;
+            MitigationTable::fetch_mitigations(Domain::MOBILE, &fake_reqwest)?;
 
         assert_eq!(
             retrieved_mitigations.is_empty(),
@@ -194,8 +198,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/mitigations/ics.html").to_string());
 
-        let retrieved_mitigations =
-            AttackService::new(fake_reqwest).get_mitigations(Domain::ICS)?;
+        let retrieved_mitigations = MitigationTable::fetch_mitigations(Domain::ICS, &fake_reqwest)?;
 
         assert_eq!(
             retrieved_mitigations.is_empty(),
@@ -213,7 +216,7 @@ mod tests {
             include_str!("html/attck/mitigations/user_account_control.html").to_string(),
         );
 
-        let mitigation = AttackService::new(fake_reqwest).get_mitigation(TEST_MITIGATION_ID)?;
+        let mitigation = Mitigation::fetch_mitigation(TEST_MITIGATION_ID, &fake_reqwest)?;
 
         assert_ne!(
             mitigation.addressed_techniques.is_none(),

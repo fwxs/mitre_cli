@@ -1,8 +1,11 @@
 use select::document::Document;
 
-use crate::{attack::AttackService, error, WebFetch};
+use crate::{error, WebFetch};
 
-use super::{techniques::domain::DomainTechniquesTable, Row, Table};
+use super::{
+    scrape_entity_description, scrape_entity_h2_tables, scrape_entity_name, scrape_tables,
+    techniques::domain::DomainTechniquesTable, Row, Table,
+};
 
 const ATTCK_GROUPS_URL: &'static str = "https://attack.mitre.org/groups/";
 
@@ -57,6 +60,15 @@ impl GroupsTable {
 
     pub fn len(&self) -> usize {
         return self.0.len();
+    }
+
+    pub fn fetch_groups(web_client: &impl WebFetch) -> Result<GroupsTable, error::Error> {
+        let fetched_response = web_client.fetch(ATTCK_GROUPS_URL)?;
+        let document = Document::from(fetched_response.as_str());
+
+        return Ok(scrape_tables(&document)
+            .pop()
+            .map_or(GroupsTable::default(), |table| table.into()));
     }
 }
 
@@ -150,27 +162,16 @@ pub struct Group {
     pub software: Option<SoftwareTable>,
 }
 
-impl<S: WebFetch> AttackService<S> {
-    pub fn get_groups(&self) -> Result<GroupsTable, error::Error> {
-        let fetched_response = self.req_client.fetch(ATTCK_GROUPS_URL)?;
+impl Group {
+    pub fn fetch_group(group_id: &str, web_client: &impl WebFetch) -> Result<Group, error::Error> {
+        let fetched_response =
+            web_client.fetch(format!("{}{}", ATTCK_GROUPS_URL, group_id).as_str())?;
         let document = Document::from(fetched_response.as_str());
-
-        return Ok(self
-            .scrape_tables(&document)
-            .pop()
-            .map_or(GroupsTable::default(), |table| table.into()));
-    }
-
-    pub fn get_group(&self, group_id: &str) -> Result<Group, error::Error> {
-        let fetched_response = self
-            .req_client
-            .fetch(format!("{}{}", ATTCK_GROUPS_URL, group_id).as_str())?;
-        let document = Document::from(fetched_response.as_str());
-        let mut tables = self.scrape_entity_h2_tables(&document);
+        let mut tables = scrape_entity_h2_tables(&document);
         let group = Group {
             id: group_id.to_string(),
-            name: self.scrape_entity_name(&document),
-            desc: self.scrape_entity_description(&document),
+            name: scrape_entity_name(&document),
+            desc: scrape_entity_description(&document),
             techniques: if let Some(techniques_table) = tables.remove("techniques") {
                 techniques_table.into()
             } else {
@@ -182,17 +183,18 @@ impl<S: WebFetch> AttackService<S> {
                 None
             },
             assoc_groups: if let Some(assoc_groups_table) = tables.remove("aliasDescription") {
-                Some(self.scrape_assoc_groups(assoc_groups_table))
+                Some(
+                    assoc_groups_table
+                        .into_iter()
+                        .map(|row| row.cols[0].clone())
+                        .collect(),
+                )
             } else {
                 None
             },
         };
 
         return Ok(group);
-    }
-
-    fn scrape_assoc_groups(&self, table: Table) -> Vec<String> {
-        return table.into_iter().map(|row| row.cols[0].clone()).collect();
     }
 }
 
@@ -210,7 +212,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/groups/groups.html").to_string());
 
-        let retrieved_groups = AttackService::new(fake_reqwest).get_groups()?;
+        let retrieved_groups = GroupsTable::fetch_groups(&fake_reqwest)?;
 
         assert_eq!(
             retrieved_groups.is_empty(),
@@ -228,7 +230,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/groups/admin_338.html").to_string());
 
-        let group = AttackService::new(fake_reqwest).get_group(TEST_GROUP)?;
+        let group = Group::fetch_group(TEST_GROUP, &fake_reqwest)?;
 
         assert_ne!(
             group.techniques.is_none(),
@@ -250,7 +252,7 @@ mod tests {
             include_str!("html/attck/groups/ajax_security_team.html").to_string(),
         );
 
-        let group = AttackService::new(fake_reqwest).get_group(TEST_GROUP)?;
+        let group = Group::fetch_group(TEST_GROUP, &fake_reqwest)?;
 
         assert_ne!(
             group.assoc_groups.is_none(),
