@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use select::document::Document;
 
 use crate::{error, WebFetch};
@@ -13,6 +15,19 @@ pub enum Domain {
     ENTERPRISE,
     MOBILE,
     ICS,
+}
+
+impl FromStr for Domain {
+    type Err = String;
+
+    fn from_str(dom_str: &str) -> Result<Self, Self::Err> {
+        match dom_str {
+            "enterprise" => Ok(Self::ENTERPRISE),
+            "mobile" => Ok(Self::MOBILE),
+            "ics" => Ok(Self::ICS),
+            _ => Err(format!("{} is not a valid mitigation domain", dom_str)),
+        }
+    }
 }
 
 impl Into<&'static str> for Domain {
