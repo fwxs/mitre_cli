@@ -44,8 +44,49 @@ impl From<Row> for DataSourceRow {
     }
 }
 
+impl Into<comfy_table::Row> for DataSourceRow {
+    fn into(self) -> comfy_table::Row {
+        let mut row = comfy_table::Row::new();
+        row.add_cell(comfy_table::Cell::new(self.id))
+            .add_cell(comfy_table::Cell::new(self.name))
+            .add_cell(comfy_table::Cell::new(self.description));
+
+        return row;
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct DataSourcesTable(pub Vec<DataSourceRow>);
+
+impl Into<comfy_table::Table> for DataSourcesTable {
+    fn into(self) -> comfy_table::Table {
+        let mut table = comfy_table::Table::new();
+        table
+            .load_preset(comfy_table::presets::UTF8_FULL)
+            .set_content_arrangement(comfy_table::ContentArrangement::Dynamic)
+            .set_header(vec![
+                comfy_table::Cell::new("ID")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("Name")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("Description")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+            ])
+            .add_rows(
+                self.into_iter()
+                    .map(|data_source| data_source.into())
+                    .collect::<Vec<comfy_table::Row>>(),
+            );
+
+        return table;
+    }
+}
 
 impl DataSourcesTable {
     pub fn is_empty(&self) -> bool {

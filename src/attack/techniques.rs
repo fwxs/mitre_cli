@@ -1,5 +1,5 @@
-use std::{cell::RefCell, str::FromStr};
 use std::rc::Rc;
+use std::{cell::RefCell, str::FromStr};
 
 use select::document::Document;
 
@@ -158,6 +158,57 @@ impl From<Table> for TechniquesTable {
                 .map(|technique| technique.take())
                 .collect(),
         );
+    }
+}
+
+impl Into<comfy_table::Table> for TechniquesTable {
+    fn into(self) -> comfy_table::Table {
+        let mut table = comfy_table::Table::new();
+        table
+            .load_preset(comfy_table::presets::UTF8_FULL)
+            .set_content_arrangement(comfy_table::ContentArrangement::Dynamic)
+            .set_header(vec![
+                comfy_table::Cell::new("ID")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("Name")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("Description")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+            ]);
+
+        for technique in self {
+            table.add_row(vec![
+                comfy_table::Cell::new(technique.id.clone()),
+                comfy_table::Cell::new(technique.name),
+                comfy_table::Cell::new(technique.description),
+            ]);
+
+            if let Some(sub_techniques) = technique.sub_techniques {
+                table.add_rows(
+                    sub_techniques
+                        .into_iter()
+                        .map(|sub_technique| {
+                            vec![
+                                comfy_table::Cell::new(format!(
+                                    "{}{}",
+                                    technique.id, sub_technique.id
+                                )),
+                                comfy_table::Cell::new(sub_technique.name),
+                                comfy_table::Cell::new(sub_technique.description),
+                            ]
+                        })
+                        .collect::<Vec<Vec<comfy_table::Cell>>>(),
+                );
+            }
+        }
+
+        return table;
     }
 }
 

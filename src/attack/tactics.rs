@@ -76,6 +76,17 @@ impl From<Row> for TacticRow {
     }
 }
 
+impl Into<comfy_table::Row> for TacticRow {
+    fn into(self) -> comfy_table::Row {
+        let mut row = comfy_table::Row::new();
+        row.add_cell(comfy_table::Cell::new(self.id))
+            .add_cell(comfy_table::Cell::new(self.name))
+            .add_cell(comfy_table::Cell::new(self.description));
+
+        return row;
+    }
+}
+
 #[derive(Default, Debug)]
 pub struct TacticsTable(pub Vec<TacticRow>);
 
@@ -91,6 +102,36 @@ impl IntoIterator for TacticsTable {
 impl From<Table> for TacticsTable {
     fn from(table: Table) -> Self {
         return Self(table.into_iter().map(TacticRow::from).collect());
+    }
+}
+
+impl Into<comfy_table::Table> for TacticsTable {
+    fn into(self) -> comfy_table::Table {
+        let mut table = comfy_table::Table::new();
+        table
+            .load_preset(comfy_table::presets::UTF8_FULL)
+            .set_content_arrangement(comfy_table::ContentArrangement::Dynamic)
+            .set_header(vec![
+                comfy_table::Cell::new("ID")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("Name")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("Description")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+            ])
+            .add_rows(
+                self.into_iter()
+                    .map(|tactic| tactic.into())
+                    .collect::<Vec<comfy_table::Row>>(),
+            );
+
+        return table;
     }
 }
 

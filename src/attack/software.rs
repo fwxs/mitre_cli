@@ -17,6 +17,24 @@ pub struct SoftwareRow {
     pub description: String,
 }
 
+impl Into<comfy_table::Row> for SoftwareRow {
+    fn into(self) -> comfy_table::Row {
+        let mut row = comfy_table::Row::new();
+        row.add_cell(comfy_table::Cell::new(self.id))
+            .add_cell(comfy_table::Cell::new(self.name))
+            .add_cell(comfy_table::Cell::new(
+                if let Some(assoc_soft) = self.assoc_software {
+                    assoc_soft.join(" ")
+                } else {
+                    String::default()
+                },
+            ))
+            .add_cell(comfy_table::Cell::new(self.description));
+
+        return row;
+    }
+}
+
 impl From<Row> for SoftwareRow {
     fn from(row: Row) -> Self {
         let mut software = Self::default();
@@ -69,6 +87,40 @@ impl SoftwareTable {
         return Ok(scrape_tables(&document)
             .pop()
             .map_or(SoftwareTable::default(), |table| table.into()));
+    }
+}
+
+impl Into<comfy_table::Table> for SoftwareTable {
+    fn into(self) -> comfy_table::Table {
+        let mut table = comfy_table::Table::new();
+        table
+            .load_preset(comfy_table::presets::UTF8_FULL)
+            .set_content_arrangement(comfy_table::ContentArrangement::Dynamic)
+            .set_header(vec![
+                comfy_table::Cell::new("ID")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("Name")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("Associated Software")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("Description")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+            ])
+            .add_rows(
+                self.into_iter()
+                    .map(|software| software.into())
+                    .collect::<Vec<comfy_table::Row>>(),
+            );
+
+        return table;
     }
 }
 
