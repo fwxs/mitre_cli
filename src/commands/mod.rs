@@ -3,7 +3,9 @@ use structopt::StructOpt;
 mod attack;
 
 #[derive(StructOpt)]
+#[structopt(name = "mitre_cli", about = "An oxidized Mitre Framework's scraper.", no_version)]
 pub enum Command {
+    /// Mitre ATT&CK Framework scraper sub-menu
     Attack(attack::AttackCommand)
 }
 

@@ -6,53 +6,79 @@ use crate::{
 };
 use structopt::StructOpt;
 
-#[derive(StructOpt)]
 
+#[derive(StructOpt)]
+#[structopt(no_version)]
 pub enum AttackDescribeCommand {
+    /// ATT&CK Tactic
     Tactic {
+        /// Tactic ID
         id: String,
 
+        /// Show techniques related to the retrieved tactic
         #[structopt(long)]
         show_techniques: bool,
     },
+    /// ATT&CK Technique
     Technique {
+        /// Technique ID
         id: String,
 
+        /// Show procedures related to the retrieved technique
         #[structopt(long)]
         show_procedures: bool,
 
+        /// Show mitigations related to the retrieved technique
         #[structopt(long)]
         show_mitigations: bool,
 
+        /// Show detections related to the retrieved technique
         #[structopt(long)]
         show_detections: bool,
     },
+    /// ATT&CK Mitigation
     Mitigation {
+        /// Mitigation ID
         id: String,
 
+        /// Show techniques related to the retrieved mitigation
         #[structopt(long)]
         show_techniques: bool,
     },
+    /// ATT&CK Software
     Software {
+        /// Software ID
         id: String,
 
+        /// Show techniques related to the retrieved software
         #[structopt(long)]
         show_techniques: bool,
 
+        /// Show groups related to the retrieved software
         #[structopt(long)]
         show_groups: bool,
     },
+    /// ATT&CK Group
     Group {
+        /// Group ID
         id: String,
 
+        /// Show techniques related to the retrieved group
         #[structopt(long)]
         show_techniques: bool,
 
+        /// Show software related to the retrieved group
         #[structopt(long)]
         show_software: bool,
     },
+    /// ATT&CK Data Source
     DataSource {
+        /// Data Source ID
         id: String,
+
+        /// Show components related to the retrieved Data Source
+        #[structopt(long)]
+        show_components: bool
     },
 }
 
@@ -89,8 +115,8 @@ impl AttackDescribeCommand {
                 show_techniques,
                 show_software,
             } => self.handle_group_cmd(&id, show_software, show_techniques, req_client)?,
-            AttackDescribeCommand::DataSource { ref id } => {
-                self.handle_data_source_cmd(id, req_client)?
+            AttackDescribeCommand::DataSource { ref id, show_components } => {
+                self.handle_data_source_cmd(id, show_components, req_client)?
             }
         };
 
@@ -264,6 +290,7 @@ impl AttackDescribeCommand {
     fn handle_data_source_cmd(
         &self,
         id: &str,
+        show_components: bool,
         req_client: impl WebFetch,
     ) -> Result<(), crate::error::Error> {
         let data_source = data_sources::fetch_data_source(id, &req_client)?;
@@ -271,21 +298,24 @@ impl AttackDescribeCommand {
         println!("[*] Data Source ID: {}", data_source.id);
         println!("[*] Data Source name: {}", data_source.name);
         println!("[*] Data Source description: {}", data_source.description);
-        println!("\nData components\n");
 
-        for (inx, component) in data_source.components.into_iter().enumerate() {
-            println!("[*] Component No.{} name: {}", inx + 1, component.name);
-            println!(
-                "[*] Component No.{} description: {}",
-                inx + 1,
-                component.description
-            );
-
-            if component.detections.is_empty() {
-                println!("[!] No detections found.");
-            } else {
-                let detections: comfy_table::Table = component.detections.into();
-                println!("{}", detections);
+        if show_components {
+            println!("\nData components\n");
+    
+            for (inx, component) in data_source.components.into_iter().enumerate() {
+                println!("[*] Component No.{} name: {}", inx + 1, component.name);
+                println!(
+                    "[*] Component No.{} description: {}",
+                    inx + 1,
+                    component.description
+                );
+    
+                if component.detections.is_empty() {
+                    println!("[!] No detections found.");
+                } else {
+                    let detections: comfy_table::Table = component.detections.into();
+                    println!("{}", detections);
+                }
             }
         }
 
@@ -294,12 +324,31 @@ impl AttackDescribeCommand {
 }
 
 #[derive(StructOpt)]
+#[structopt(no_version)]
 pub enum AttackListCommand {
-    Tactics { domain: String },
-    Techniques { domain: String },
-    Mitigations { domain: String },
+    /// Mitre ATT&CK tactics
+    Tactics {
+        /// Tactics of the specified domain (enterprise, ics, mobile)
+        #[structopt(long)]
+        domain: String
+    },
+    /// Mitre ATT&CK techniques
+    Techniques {
+        /// Techniques associated to the specified domain (enterprise, ics, mobile)
+        #[structopt(long)]
+        domain: String
+    },
+    /// Mitre ATT&CK mitigations
+    Mitigations {
+        /// Domain-specific mitre mitigations
+        #[structopt(long)]
+        domain: String
+    },
+    /// Mitre ATT&CK software
     Software,
+    /// Mitre ATT&CK groups
     Groups,
+    /// Mitre ATT&CK data sources
     DataSources,
 }
 
@@ -330,8 +379,11 @@ impl AttackListCommand {
 }
 
 #[derive(StructOpt)]
+#[structopt(no_version)]
 pub enum AttackCommand {
+    /// List Mitre ATT&CK entities.
     List(AttackListCommand),
+    /// Retrieve ATT&CK entity information (Name, Description and associated data)
     Describe(AttackDescribeCommand),
 }
 

@@ -565,7 +565,7 @@ dependencies = [
 
 [[package]]
 name = "mitre_cli"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "comfy-table",
  "lazy_static",
