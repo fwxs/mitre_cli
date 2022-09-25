@@ -113,15 +113,15 @@ impl GroupsTable {
     pub fn len(&self) -> usize {
         return self.0.len();
     }
+}
 
-    pub fn fetch_groups(web_client: &impl WebFetch) -> Result<GroupsTable, error::Error> {
-        let fetched_response = web_client.fetch(ATTCK_GROUPS_URL)?;
-        let document = Document::from(fetched_response.as_str());
+pub fn fetch_groups(web_client: &impl WebFetch) -> Result<GroupsTable, error::Error> {
+    let fetched_response = web_client.fetch(ATTCK_GROUPS_URL)?;
+    let document = Document::from(fetched_response.as_str());
 
-        return Ok(scrape_tables(&document)
-            .pop()
-            .map_or(GroupsTable::default(), |table| table.into()));
-    }
+    return Ok(scrape_tables(&document)
+        .pop()
+        .map_or(GroupsTable::default(), |table| table.into()));
 }
 
 impl IntoIterator for GroupsTable {
@@ -264,7 +264,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/groups/groups.html").to_string());
 
-        let retrieved_groups = GroupsTable::fetch_groups(&fake_reqwest)?;
+        let retrieved_groups = fetch_groups(&fake_reqwest)?;
 
         assert_eq!(
             retrieved_groups.is_empty(),

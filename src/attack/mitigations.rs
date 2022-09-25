@@ -18,14 +18,14 @@ pub enum Domain {
 }
 
 impl FromStr for Domain {
-    type Err = String;
+    type Err = error::Error;
 
     fn from_str(dom_str: &str) -> Result<Self, Self::Err> {
         match dom_str {
             "enterprise" => Ok(Self::ENTERPRISE),
             "mobile" => Ok(Self::MOBILE),
             "ics" => Ok(Self::ICS),
-            _ => Err(format!("{} is not a valid mitigation domain", dom_str)),
+            _ => Err(error::Error::InvalidValue(format!("{} is not a valid mitigation domain", dom_str))),
         }
     }
 }
@@ -108,18 +108,18 @@ impl MitigationTable {
     pub fn len(&self) -> usize {
         return self.0.len();
     }
+}
 
-    pub fn fetch_mitigations(
-        mitigation_type: Domain,
-        web_client: &impl WebFetch,
-    ) -> Result<MitigationTable, error::Error> {
-        let fetched_response = web_client.fetch(mitigation_type.into())?;
-        let document = Document::from(fetched_response.as_str());
+pub fn fetch_mitigations(
+    mitigation_type: Domain,
+    web_client: &impl WebFetch,
+) -> Result<MitigationTable, error::Error> {
+    let fetched_response = web_client.fetch(mitigation_type.into())?;
+    let document = Document::from(fetched_response.as_str());
 
-        return Ok(scrape_tables(&document)
-            .pop()
-            .map_or(MitigationTable::default(), |table| table.into()));
-    }
+    return Ok(scrape_tables(&document)
+        .pop()
+        .map_or(MitigationTable::default(), |table| table.into()));
 }
 
 impl From<Row> for MitigationRow {
@@ -218,8 +218,7 @@ mod tests {
             include_str!("html/attck/mitigations/enterprise.html").to_string(),
         );
 
-        let retrieved_mitigations =
-            MitigationTable::fetch_mitigations(Domain::ENTERPRISE, &fake_reqwest)?;
+        let retrieved_mitigations = fetch_mitigations(Domain::ENTERPRISE, &fake_reqwest)?;
 
         assert_eq!(
             retrieved_mitigations.is_empty(),
@@ -236,8 +235,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/mitigations/mobile.html").to_string());
 
-        let retrieved_mitigations =
-            MitigationTable::fetch_mitigations(Domain::MOBILE, &fake_reqwest)?;
+        let retrieved_mitigations = fetch_mitigations(Domain::MOBILE, &fake_reqwest)?;
 
         assert_eq!(
             retrieved_mitigations.is_empty(),
@@ -254,7 +252,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/mitigations/ics.html").to_string());
 
-        let retrieved_mitigations = MitigationTable::fetch_mitigations(Domain::ICS, &fake_reqwest)?;
+        let retrieved_mitigations = fetch_mitigations(Domain::ICS, &fake_reqwest)?;
 
         assert_eq!(
             retrieved_mitigations.is_empty(),

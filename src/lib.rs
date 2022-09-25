@@ -2,6 +2,7 @@
 extern crate lazy_static;
 pub mod attack;
 pub mod error;
+pub mod commands;
 
 lazy_static! {
     static ref RE: regex::Regex = regex::Regex::new(r"\[[0-9]+\]").unwrap();

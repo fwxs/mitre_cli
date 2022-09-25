@@ -19,14 +19,14 @@ pub enum Domain {
 }
 
 impl FromStr for Domain {
-    type Err = String;
+    type Err = error::Error;
 
     fn from_str(dom_str: &str) -> Result<Self, Self::Err> {
         match dom_str {
             "enterprise" => Ok(Self::ENTERPRISE),
             "mobile" => Ok(Self::MOBILE),
             "ics" => Ok(Self::ICS),
-            _ => Err(format!("{} is not a valid technique domain", dom_str)),
+            _ => Err(error::Error::InvalidValue(format!("{} is not a valid technique domain", dom_str))),
         }
     }
 }
@@ -216,18 +216,18 @@ impl TechniquesTable {
     pub fn len(&self) -> usize {
         return self.0.len();
     }
+}
 
-    pub fn fetch_techniques(
-        technique_type: Domain,
-        web_client: &impl WebFetch,
-    ) -> Result<TechniquesTable, error::Error> {
-        let fetched_response = web_client.fetch(technique_type.into())?;
-        let document = Document::from(fetched_response.as_str());
+pub fn fetch_techniques(
+    technique_type: Domain,
+    web_client: &impl WebFetch,
+) -> Result<TechniquesTable, error::Error> {
+    let fetched_response = web_client.fetch(technique_type.into())?;
+    let document = Document::from(fetched_response.as_str());
 
-        return Ok(scrape_tables(&document)
-            .pop()
-            .map_or(TechniquesTable::default(), |table| table.into()));
-    }
+    return Ok(scrape_tables(&document)
+        .pop()
+        .map_or(TechniquesTable::default(), |table| table.into()));
 }
 
 #[derive(Debug)]
@@ -610,8 +610,7 @@ mod tests {
             include_str!("html/attck/techniques/enterprise.html").to_string(),
         );
 
-        let retrieved_techniques =
-            TechniquesTable::fetch_techniques(Domain::ENTERPRISE, &fake_reqwest)?;
+        let retrieved_techniques = fetch_techniques(Domain::ENTERPRISE, &fake_reqwest)?;
 
         assert_eq!(retrieved_techniques.len(), SCRAPED_ENTERPRISE_ROWS);
 
@@ -624,8 +623,7 @@ mod tests {
             include_str!("html/attck/techniques/enterprise.html").to_string(),
         );
 
-        let fetched_sub_techniques =
-            TechniquesTable::fetch_techniques(Domain::ENTERPRISE, &fake_reqwest)?
+        let fetched_sub_techniques = fetch_techniques(Domain::ENTERPRISE, &fake_reqwest)?
                 .into_iter()
                 .filter(|technique| technique.sub_techniques.is_some())
                 .map(|technique| technique.sub_techniques.as_ref().unwrap().len())
@@ -645,8 +643,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/techniques/mobile.html").to_string());
 
-        let retrieved_techniques =
-            TechniquesTable::fetch_techniques(Domain::MOBILE, &fake_reqwest)?;
+        let retrieved_techniques = fetch_techniques(Domain::MOBILE, &fake_reqwest)?;
 
         assert_eq!(retrieved_techniques.len(), SCRAPED_MOBILE_ROWS);
 
@@ -658,8 +655,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/techniques/mobile.html").to_string());
 
-        let fetched_sub_techniques =
-            TechniquesTable::fetch_techniques(Domain::MOBILE, &fake_reqwest)?
+        let fetched_sub_techniques = fetch_techniques(Domain::MOBILE, &fake_reqwest)?
                 .into_iter()
                 .filter(|technique| technique.sub_techniques.is_some())
                 .map(|technique| technique.sub_techniques.as_ref().unwrap().len())
@@ -676,7 +672,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/techniques/ics.html").to_string());
 
-        let retrieved_techniques = TechniquesTable::fetch_techniques(Domain::ICS, &fake_reqwest)?;
+        let retrieved_techniques = fetch_techniques(Domain::ICS, &fake_reqwest)?;
 
         assert_eq!(retrieved_techniques.len(), SCRAPED_ICS_ROWS);
 
@@ -688,7 +684,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/techniques/ics.html").to_string());
 
-        let fetched_sub_techniques = TechniquesTable::fetch_techniques(Domain::ICS, &fake_reqwest)?
+        let fetched_sub_techniques = fetch_techniques(Domain::ICS, &fake_reqwest)?
             .into_iter()
             .filter(|technique| technique.sub_techniques.is_some())
             .map(|technique| technique.sub_techniques.as_ref().unwrap().len())

@@ -96,17 +96,17 @@ impl DataSourcesTable {
     pub fn len(&self) -> usize {
         return self.0.len();
     }
+}
 
-    pub fn fetch_data_sources(
-        web_client: &impl WebFetch,
-    ) -> Result<DataSourcesTable, error::Error> {
-        let fetched_response = web_client.fetch(ATTCK_DATA_SOURCES_URL)?;
-        let document = Document::from(fetched_response.as_str());
+pub fn fetch_data_sources(
+    web_client: &impl WebFetch,
+) -> Result<DataSourcesTable, error::Error> {
+    let fetched_response = web_client.fetch(ATTCK_DATA_SOURCES_URL)?;
+    let document = Document::from(fetched_response.as_str());
 
-        return Ok(scrape_tables(&document)
-            .pop()
-            .map_or(DataSourcesTable::default(), |table| table.into()));
-    }
+    return Ok(scrape_tables(&document)
+        .pop()
+        .map_or(DataSourcesTable::default(), |table| table.into()));
 }
 
 impl IntoIterator for DataSourcesTable {
@@ -328,7 +328,7 @@ mod tests {
             include_str!("html/attck/data_sources/data_sources.html").to_string(),
         );
 
-        let retrieved_data_source = DataSourcesTable::fetch_data_sources(&fake_reqwest)?;
+        let retrieved_data_source = fetch_data_sources(&fake_reqwest)?;
 
         assert_eq!(
             retrieved_data_source.is_empty(),

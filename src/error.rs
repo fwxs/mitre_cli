@@ -1,17 +1,24 @@
 #[derive(Debug, PartialEq, Clone)]
 pub enum Error {
-    RequestError(String),
-    GeneralError(String)
+    Request(String),
+    General(String),
+    InvalidValue(String)
 }
 
 impl From<reqwest::Error> for Error {
     fn from(err: reqwest::Error) -> Self {
-        return Self::RequestError(format!("Reqwest error: {}", err.to_string()));
+        return Self::Request(format!("Reqwest error: {}", err.to_string()));
     }
 }
 
 impl From<&'static str> for Error {
     fn from(str_err: &'static str) -> Self {
-        Error::GeneralError(String::from(str_err))
+        Error::General(String::from(str_err))
+    }
+}
+
+impl From<String> for Error {
+    fn from(str_err: String) -> Self {
+        Error::General(str_err)
     }
 }

@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use select::document::Document;
 
-use crate::WebFetch;
+use crate::{WebFetch, error::Error};
 
 use super::{
     scrape_entity_description, scrape_entity_name, scrape_tables, techniques::TechniquesTable, Row,
@@ -18,14 +18,14 @@ pub enum Domain {
 }
 
 impl FromStr for Domain {
-    type Err = String;
+    type Err = Error;
 
     fn from_str(dom_str: &str) -> Result<Self, Self::Err> {
         match dom_str {
             "enterprise" => Ok(Self::ENTERPRISE),
             "mobile" => Ok(Self::MOBILE),
             "ics" => Ok(Self::ICS),
-            _ => Err(format!("{} is not a valid tactic domain", dom_str)),
+            _ => Err(Error::InvalidValue(format!("{} is not a valid tactic domain", dom_str))),
         }
     }
 }
@@ -143,20 +143,20 @@ impl TacticsTable {
     pub fn is_empty(&self) -> bool {
         return self.0.is_empty();
     }
+}
 
-    pub fn fetch_tactics(
-        tactic_type: Domain,
-        req_client: &impl WebFetch,
-    ) -> Result<Self, crate::error::Error> {
-        let fetched_response = req_client.fetch(tactic_type.into())?;
-        let document = Document::from(fetched_response.as_str());
+pub fn fetch_tactics(
+    tactic_type: Domain,
+    req_client: &impl WebFetch,
+) -> Result<TacticsTable, crate::error::Error> {
+    let fetched_response = req_client.fetch(tactic_type.into())?;
+    let document = Document::from(fetched_response.as_str());
 
-        return Ok(scrape_tables(&document)
-            .pop()
-            .map_or(TacticsTable::default(), |scrapped_table| {
-                scrapped_table.into()
-            }));
-    }
+    return Ok(scrape_tables(&document)
+        .pop()
+        .map_or(TacticsTable::default(), |scrapped_table| {
+            scrapped_table.into()
+        }));
 }
 
 #[derive(Default, Debug)]
@@ -204,8 +204,7 @@ mod tests {
     fn test_fetch_enterprise_tactics_html() -> Result<(), crate::error::Error> {
         let fake_reqwest_client = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/tactics/enterprise.html").to_string());
-        let retrieved_tactics =
-            TacticsTable::fetch_tactics(Domain::ENTERPRISE, &fake_reqwest_client)?;
+        let retrieved_tactics = fetch_tactics(Domain::ENTERPRISE, &fake_reqwest_client)?;
 
         assert_eq!(
             retrieved_tactics.is_empty(),
@@ -223,7 +222,7 @@ mod tests {
     fn test_fetch_mobile_tactics_html() -> Result<(), crate::error::Error> {
         let fake_reqwest_client = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/tactics/mobile.html").to_string());
-        let retrieved_tactics = TacticsTable::fetch_tactics(Domain::MOBILE, &fake_reqwest_client)?;
+        let retrieved_tactics = fetch_tactics(Domain::MOBILE, &fake_reqwest_client)?;
 
         assert_eq!(
             retrieved_tactics.is_empty(),
@@ -240,7 +239,7 @@ mod tests {
     fn test_fetch_ics_tactics_html() -> Result<(), crate::error::Error> {
         let fake_reqwest_client = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/tactics/ics.html").to_string());
-        let retrieved_tactics = TacticsTable::fetch_tactics(Domain::ICS, &fake_reqwest_client)?;
+        let retrieved_tactics = fetch_tactics(Domain::ICS, &fake_reqwest_client)?;
 
         assert_eq!(
             retrieved_tactics.is_empty(),
@@ -256,11 +255,10 @@ mod tests {
     #[test]
     fn test_dont_panic_on_request_error() {
         let fake_reqwest_client = FakeHttpReqwest::default()
-            .set_error_response(crate::error::Error::RequestError(format!("Reqwest error")));
-        let error: crate::error::Error =
-            TacticsTable::fetch_tactics(Domain::ENTERPRISE, &fake_reqwest_client).unwrap_err();
+            .set_error_response(crate::error::Error::Request(format!("Reqwest error")));
+        let error: crate::error::Error = fetch_tactics(Domain::ENTERPRISE, &fake_reqwest_client).unwrap_err();
 
-        assert!(matches!(error, crate::error::Error::RequestError(_)));
+        assert!(matches!(error, crate::error::Error::Request(_)));
     }
 
     #[test]

@@ -79,15 +79,15 @@ impl SoftwareTable {
     pub fn len(&self) -> usize {
         return self.0.len();
     }
+}
 
-    pub fn fetch_software(web_client: &impl WebFetch) -> Result<SoftwareTable, error::Error> {
-        let fetched_response = web_client.fetch(ATTCK_SOFTWARE_URL)?;
-        let document = Document::from(fetched_response.as_str());
+pub fn fetch_software(web_client: &impl WebFetch) -> Result<SoftwareTable, error::Error> {
+    let fetched_response = web_client.fetch(ATTCK_SOFTWARE_URL)?;
+    let document = Document::from(fetched_response.as_str());
 
-        return Ok(scrape_tables(&document)
-            .pop()
-            .map_or(SoftwareTable::default(), |table| table.into()));
-    }
+    return Ok(scrape_tables(&document)
+        .pop()
+        .map_or(SoftwareTable::default(), |table| table.into()));
 }
 
 impl Into<comfy_table::Table> for SoftwareTable {
@@ -241,7 +241,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/software/software.html").to_string());
 
-        let retrieved_software = SoftwareTable::fetch_software(&fake_reqwest)?;
+        let retrieved_software = fetch_software(&fake_reqwest)?;
 
         assert_eq!(
             retrieved_software.is_empty(),
