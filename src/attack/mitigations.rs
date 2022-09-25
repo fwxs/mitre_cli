@@ -25,7 +25,10 @@ impl FromStr for Domain {
             "enterprise" => Ok(Self::ENTERPRISE),
             "mobile" => Ok(Self::MOBILE),
             "ics" => Ok(Self::ICS),
-            _ => Err(error::Error::InvalidValue(format!("{} is not a valid mitigation domain", dom_str))),
+            _ => Err(error::Error::InvalidValue(format!(
+                "{} is not a valid mitigation domain",
+                dom_str
+            ))),
         }
     }
 }
@@ -177,28 +180,26 @@ pub struct Mitigation {
     pub addressed_techniques: Option<DomainTechniquesTable>,
 }
 
-impl Mitigation {
-    pub fn fetch_mitigation(
-        mitigation_id: &str,
-        web_client: &impl WebFetch,
-    ) -> Result<Mitigation, error::Error> {
-        let fetched_response =
-            web_client.fetch(format!("{}{}", ATTCK_MITIGATION_URL, mitigation_id).as_str())?;
-        let document = Document::from(fetched_response.as_str());
-        let mut tables = scrape_entity_h2_tables(&document);
-        let mitigation = Mitigation {
-            id: mitigation_id.to_string(),
-            name: scrape_entity_name(&document),
-            desc: scrape_entity_description(&document),
-            addressed_techniques: if let Some(techniques_table) = tables.remove("techniques") {
-                techniques_table.into()
-            } else {
-                None
-            },
-        };
+pub fn fetch_mitigation(
+    mitigation_id: &str,
+    web_client: &impl WebFetch,
+) -> Result<Mitigation, error::Error> {
+    let fetched_response =
+        web_client.fetch(format!("{}{}", ATTCK_MITIGATION_URL, mitigation_id).as_str())?;
+    let document = Document::from(fetched_response.as_str());
+    let mut tables = scrape_entity_h2_tables(&document);
+    let mitigation = Mitigation {
+        id: mitigation_id.to_string(),
+        name: scrape_entity_name(&document),
+        desc: scrape_entity_description(&document),
+        addressed_techniques: if let Some(techniques_table) = tables.remove("techniques") {
+            techniques_table.into()
+        } else {
+            None
+        },
+    };
 
-        return Ok(mitigation);
-    }
+    return Ok(mitigation);
 }
 
 #[cfg(test)]
@@ -270,7 +271,7 @@ mod tests {
             include_str!("html/attck/mitigations/user_account_control.html").to_string(),
         );
 
-        let mitigation = Mitigation::fetch_mitigation(TEST_MITIGATION_ID, &fake_reqwest)?;
+        let mitigation = fetch_mitigation(TEST_MITIGATION_ID, &fake_reqwest)?;
 
         assert_ne!(
             mitigation.addressed_techniques.is_none(),

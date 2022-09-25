@@ -166,6 +166,17 @@ impl From<Row> for SoftwareRow {
     }
 }
 
+impl Into<comfy_table::Row> for SoftwareRow {
+    fn into(self) -> comfy_table::Row {
+        let mut row = comfy_table::Row::new();
+        row.add_cell(comfy_table::Cell::new(self.id))
+            .add_cell(comfy_table::Cell::new(self.name))
+            .add_cell(comfy_table::Cell::new(self.techniques.join(", ")));
+
+        return row;
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct SoftwareTable(pub Vec<SoftwareRow>);
 
@@ -194,6 +205,36 @@ impl From<Table> for Option<SoftwareTable> {
     }
 }
 
+impl Into<comfy_table::Table> for SoftwareTable {
+    fn into(self) -> comfy_table::Table {
+        let mut table = comfy_table::Table::new();
+        table
+            .load_preset(comfy_table::presets::UTF8_FULL)
+            .set_content_arrangement(comfy_table::ContentArrangement::Dynamic)
+            .set_header(vec![
+                comfy_table::Cell::new("ID")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("Name")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("Techniques")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+            ])
+            .add_rows(
+                self.into_iter()
+                    .map(|group| group.into())
+                    .collect::<Vec<comfy_table::Row>>(),
+            );
+
+        return table;
+    }
+}
+
 impl SoftwareTable {
     pub fn is_empty(&self) -> bool {
         return self.0.is_empty();
@@ -214,40 +255,38 @@ pub struct Group {
     pub software: Option<SoftwareTable>,
 }
 
-impl Group {
-    pub fn fetch_group(group_id: &str, web_client: &impl WebFetch) -> Result<Group, error::Error> {
-        let fetched_response =
-            web_client.fetch(format!("{}{}", ATTCK_GROUPS_URL, group_id).as_str())?;
-        let document = Document::from(fetched_response.as_str());
-        let mut tables = scrape_entity_h2_tables(&document);
-        let group = Group {
-            id: group_id.to_string(),
-            name: scrape_entity_name(&document),
-            desc: scrape_entity_description(&document),
-            techniques: if let Some(techniques_table) = tables.remove("techniques") {
-                techniques_table.into()
-            } else {
-                None
-            },
-            software: if let Some(software_table) = tables.remove("software") {
-                software_table.into()
-            } else {
-                None
-            },
-            assoc_groups: if let Some(assoc_groups_table) = tables.remove("aliasDescription") {
-                Some(
-                    assoc_groups_table
-                        .into_iter()
-                        .map(|row| row.cols[0].clone())
-                        .collect(),
-                )
-            } else {
-                None
-            },
-        };
+pub fn fetch_group(group_id: &str, web_client: &impl WebFetch) -> Result<Group, error::Error> {
+    let fetched_response =
+        web_client.fetch(format!("{}{}", ATTCK_GROUPS_URL, group_id).as_str())?;
+    let document = Document::from(fetched_response.as_str());
+    let mut tables = scrape_entity_h2_tables(&document);
+    let group = Group {
+        id: group_id.to_string(),
+        name: scrape_entity_name(&document),
+        desc: scrape_entity_description(&document),
+        techniques: if let Some(techniques_table) = tables.remove("techniques") {
+            techniques_table.into()
+        } else {
+            None
+        },
+        software: if let Some(software_table) = tables.remove("software") {
+            software_table.into()
+        } else {
+            None
+        },
+        assoc_groups: if let Some(assoc_groups_table) = tables.remove("aliasDescription") {
+            Some(
+                assoc_groups_table
+                    .into_iter()
+                    .map(|row| row.cols[0].clone())
+                    .collect(),
+            )
+        } else {
+            None
+        },
+    };
 
-        return Ok(group);
-    }
+    return Ok(group);
 }
 
 #[cfg(test)]
@@ -282,7 +321,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/groups/admin_338.html").to_string());
 
-        let group = Group::fetch_group(TEST_GROUP, &fake_reqwest)?;
+        let group = fetch_group(TEST_GROUP, &fake_reqwest)?;
 
         assert_ne!(
             group.techniques.is_none(),
@@ -304,7 +343,7 @@ mod tests {
             include_str!("html/attck/groups/ajax_security_team.html").to_string(),
         );
 
-        let group = Group::fetch_group(TEST_GROUP, &fake_reqwest)?;
+        let group = fetch_group(TEST_GROUP, &fake_reqwest)?;
 
         assert_ne!(
             group.assoc_groups.is_none(),

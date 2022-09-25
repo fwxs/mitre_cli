@@ -161,6 +161,16 @@ impl From<Row> for AssocGroupsRow {
     }
 }
 
+impl Into<comfy_table::Row> for AssocGroupsRow {
+    fn into(self) -> comfy_table::Row {
+        let mut row = comfy_table::Row::new();
+        row.add_cell(comfy_table::Cell::new(self.id))
+            .add_cell(comfy_table::Cell::new(self.name));
+
+        return row;
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct AssocGroupsTable(pub Vec<AssocGroupsRow>);
 
@@ -189,6 +199,32 @@ impl From<Table> for Option<AssocGroupsTable> {
     }
 }
 
+impl Into<comfy_table::Table> for AssocGroupsTable {
+    fn into(self) -> comfy_table::Table {
+        let mut table = comfy_table::Table::new();
+        table
+            .load_preset(comfy_table::presets::UTF8_FULL)
+            .set_content_arrangement(comfy_table::ContentArrangement::Dynamic)
+            .set_header(vec![
+                comfy_table::Cell::new("ID")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("Name")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+            ])
+            .add_rows(
+                self.into_iter()
+                    .map(|row| row.into())
+                    .collect::<Vec<comfy_table::Row>>(),
+            );
+
+        return table;
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct Software {
     pub id: String,
@@ -198,33 +234,31 @@ pub struct Software {
     pub groups: Option<AssocGroupsTable>,
 }
 
-impl Software {
-    pub fn fetch_software_info(
-        software_id: &str,
-        web_client: &impl WebFetch,
-    ) -> Result<Software, crate::error::Error> {
-        let fetched_response =
-            web_client.fetch(format!("{}{}", ATTCK_SOFTWARE_URL, software_id).as_str())?;
-        let document = Document::from(fetched_response.as_str());
-        let mut tables = scrape_entity_h2_tables(&document);
-        let software = Software {
-            id: software_id.to_string(),
-            name: scrape_entity_name(&document),
-            desc: scrape_entity_description(&document),
-            techniques: if let Some(techniques_table) = tables.remove("techniques") {
-                techniques_table.into()
-            } else {
-                None
-            },
-            groups: if let Some(groups_table) = tables.remove("groups") {
-                groups_table.into()
-            } else {
-                None
-            },
-        };
+pub fn fetch_software_info(
+    software_id: &str,
+    web_client: &impl WebFetch,
+) -> Result<Software, crate::error::Error> {
+    let fetched_response =
+        web_client.fetch(format!("{}{}", ATTCK_SOFTWARE_URL, software_id).as_str())?;
+    let document = Document::from(fetched_response.as_str());
+    let mut tables = scrape_entity_h2_tables(&document);
+    let software = Software {
+        id: software_id.to_string(),
+        name: scrape_entity_name(&document),
+        desc: scrape_entity_description(&document),
+        techniques: if let Some(techniques_table) = tables.remove("techniques") {
+            techniques_table.into()
+        } else {
+            None
+        },
+        groups: if let Some(groups_table) = tables.remove("groups") {
+            groups_table.into()
+        } else {
+            None
+        },
+    };
 
-        return Ok(software);
-    }
+    return Ok(software);
 }
 
 #[cfg(test)]
@@ -259,7 +293,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default()
             .set_success_response(include_str!("html/attck/software/psexec.html").to_string());
 
-        let retrieved_software = Software::fetch_software_info(TEST_SOFTWARE_ID, &fake_reqwest)?;
+        let retrieved_software = fetch_software_info(TEST_SOFTWARE_ID, &fake_reqwest)?;
 
         assert_ne!(
             retrieved_software.techniques.is_none(),

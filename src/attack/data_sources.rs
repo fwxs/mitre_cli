@@ -1,4 +1,6 @@
-use super::{scrape_table, scrape_tables, Row, Table};
+use super::{
+    scrape_entity_description, scrape_entity_name, scrape_table, scrape_tables, Row, Table,
+};
 use crate::{error, remove_ext_link_ref, WebFetch};
 use select::{
     document::Document,
@@ -98,9 +100,7 @@ impl DataSourcesTable {
     }
 }
 
-pub fn fetch_data_sources(
-    web_client: &impl WebFetch,
-) -> Result<DataSourcesTable, error::Error> {
+pub fn fetch_data_sources(web_client: &impl WebFetch) -> Result<DataSourcesTable, error::Error> {
     let fetched_response = web_client.fetch(ATTCK_DATA_SOURCES_URL)?;
     let document = Document::from(fetched_response.as_str());
 
@@ -208,12 +208,74 @@ impl From<Row> for DetectionRow {
 #[derive(Debug, Default)]
 pub struct DetectionsTable(pub Vec<DetectionRow>);
 
+impl DetectionsTable {
+    pub fn is_empty(&self) -> bool {
+        return self.0.is_empty();
+    }
+}
+
 impl IntoIterator for DetectionsTable {
     type Item = DetectionRow;
     type IntoIter = std::vec::IntoIter<DetectionRow>;
 
     fn into_iter(self) -> Self::IntoIter {
         return self.0.into_iter();
+    }
+}
+
+impl Into<comfy_table::Table> for DetectionsTable {
+    fn into(self) -> comfy_table::Table {
+        let mut table = comfy_table::Table::new();
+        table
+            .load_preset(comfy_table::presets::UTF8_FULL)
+            .set_content_arrangement(comfy_table::ContentArrangement::Dynamic)
+            .set_header(vec![
+                comfy_table::Cell::new("Domain")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("ID")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("Name")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("Detects")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+            ]);
+
+        for detection in self {
+            table.add_row(vec![
+                comfy_table::Cell::new(detection.domain),
+                comfy_table::Cell::new(detection.id.clone()),
+                comfy_table::Cell::new(detection.name),
+                comfy_table::Cell::new(detection.detects),
+            ]);
+
+            if let Some(sub_detections) = detection.sub_detections {
+                table.add_rows(
+                    sub_detections
+                        .into_iter()
+                        .map(|sub_detections| {
+                            vec![
+                                comfy_table::Cell::new(format!(
+                                    "{}{}",
+                                    detection.id, sub_detections.id
+                                )),
+                                comfy_table::Cell::new(sub_detections.name),
+                                comfy_table::Cell::new(sub_detections.detects),
+                            ]
+                        })
+                        .collect::<Vec<Vec<comfy_table::Cell>>>(),
+                );
+            }
+        }
+
+        return table;
     }
 }
 
@@ -249,66 +311,77 @@ pub struct DataComponent {
     pub detections: DetectionsTable,
 }
 
-impl DataComponent {
-    pub fn fetch_data_source(
-        data_source_id: &str,
-        web_client: &impl WebFetch,
-    ) -> Result<Vec<DataComponent>, error::Error> {
-        let url = format!(
-            "{}{}",
-            ATTCK_DATA_SOURCES_URL,
-            data_source_id.to_uppercase()
-        );
-        let fetched_response = web_client.fetch(url.as_str())?;
-        let document = Document::from(fetched_response.as_str());
-        let dt_tables = DataComponent::scrape_datasource_tables(&document);
+#[derive(Debug, Default)]
+pub struct DataSource {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub components: Vec<DataComponent>,
+}
 
-        return Ok(DataComponent::get_data_components(dt_tables));
-    }
+pub fn fetch_data_source(
+    data_source_id: &str,
+    web_client: &impl WebFetch,
+) -> Result<DataSource, error::Error> {
+    let url = format!(
+        "{}{}",
+        ATTCK_DATA_SOURCES_URL,
+        data_source_id.to_uppercase()
+    );
+    let fetched_response = web_client.fetch(url.as_str())?;
+    let document = Document::from(fetched_response.as_str());
+    let dt_tables = scrape_datasource_tables(&document);
 
-    fn scrape_datasource_tables<'a>(document: &'a Document) -> Vec<(String, String, Table)> {
-        let mut dt_tables: Vec<(String, String, Table)> = Vec::new();
-        let name = Rc::new(RefCell::new(String::new()));
-        let description = Rc::new(RefCell::new(String::new()));
+    return Ok(DataSource {
+        id: data_source_id.to_string(),
+        name: scrape_entity_name(&document),
+        description: scrape_entity_description(&document),
+        components: get_data_components(dt_tables),
+    });
+}
 
-        for node in document.find(
-            predicate::Name("div")
-                .and(predicate::Class("section-view"))
-                .descendant(
-                    predicate::Name("a")
-                        .and(predicate::Class("anchor"))
-                        .or(predicate::Name("div")
-                            .and(predicate::Class("anchor-section"))
-                            .child(predicate::Name("div").and(predicate::Class("description-body")))
-                            .child(predicate::Name("p")))
-                        .or(predicate::Name("table").and(predicate::Class("table"))),
-                ),
-        ) {
-            if node.name() == Some("a") {
-                if let Some(id) = node.attr("id") {
-                    name.replace(id.to_string());
-                }
-            } else if node.name() == Some("p") {
-                description.replace(node.text());
-            } else if node.name() == Some("table") {
-                let table = scrape_table(node);
-                dt_tables.push((name.take(), description.take(), table));
+fn scrape_datasource_tables<'a>(document: &'a Document) -> Vec<(String, String, Table)> {
+    let mut dt_tables: Vec<(String, String, Table)> = Vec::new();
+    let name = Rc::new(RefCell::new(String::new()));
+    let description = Rc::new(RefCell::new(String::new()));
+
+    for node in document.find(
+        predicate::Name("div")
+            .and(predicate::Class("section-view"))
+            .descendant(
+                predicate::Name("a")
+                    .and(predicate::Class("anchor"))
+                    .or(predicate::Name("div")
+                        .and(predicate::Class("anchor-section"))
+                        .child(predicate::Name("div").and(predicate::Class("description-body")))
+                        .child(predicate::Name("p")))
+                    .or(predicate::Name("table").and(predicate::Class("table"))),
+            ),
+    ) {
+        if node.name() == Some("a") {
+            if let Some(id) = node.attr("id") {
+                name.replace(id.to_string());
             }
+        } else if node.name() == Some("p") {
+            description.replace(node.text());
+        } else if node.name() == Some("table") {
+            let table = scrape_table(node);
+            dt_tables.push((name.take(), description.take(), table));
         }
-
-        return dt_tables;
     }
 
-    fn get_data_components(dt_comps: Vec<(String, String, Table)>) -> Vec<DataComponent> {
-        return dt_comps
-            .into_iter()
-            .map(|(name, desc, table)| DataComponent {
-                name: name.clone(),
-                description: desc.clone(),
-                detections: table.into(),
-            })
-            .collect();
-    }
+    return dt_tables;
+}
+
+fn get_data_components(dt_comps: Vec<(String, String, Table)>) -> Vec<DataComponent> {
+    return dt_comps
+        .into_iter()
+        .map(|(name, desc, table)| DataComponent {
+            name: name.clone(),
+            description: desc.clone(),
+            detections: table.into(),
+        })
+        .collect();
 }
 
 #[cfg(test)]
@@ -347,10 +420,9 @@ mod tests {
             include_str!("html/attck/data_sources/enterprise_active_directory.html").to_string(),
         );
 
-        let retrieved_data_comp =
-            DataComponent::fetch_data_source(TEST_DATA_SOURCE, &fake_reqwest)?;
+        let retrieved_data_comp = fetch_data_source(TEST_DATA_SOURCE, &fake_reqwest)?;
 
-        assert_eq!(retrieved_data_comp.len(), TEST_DATA_COMPONENTS);
+        assert_eq!(retrieved_data_comp.components.len(), TEST_DATA_COMPONENTS);
 
         Ok(())
     }

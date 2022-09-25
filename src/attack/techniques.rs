@@ -26,7 +26,10 @@ impl FromStr for Domain {
             "enterprise" => Ok(Self::ENTERPRISE),
             "mobile" => Ok(Self::MOBILE),
             "ics" => Ok(Self::ICS),
-            _ => Err(error::Error::InvalidValue(format!("{} is not a valid technique domain", dom_str))),
+            _ => Err(error::Error::InvalidValue(format!(
+                "{} is not a valid technique domain",
+                dom_str
+            ))),
         }
     }
 }
@@ -237,6 +240,16 @@ pub enum ProcedureType {
     UNKNOWN,
 }
 
+impl Into<String> for ProcedureType {
+    fn into(self) -> String {
+        match self {
+            ProcedureType::GROUP => String::from("Group"),
+            ProcedureType::SOFTWARE => String::from("Software"),
+            ProcedureType::UNKNOWN => String::from("Unknown"),
+        }
+    }
+}
+
 impl From<&String> for ProcedureType {
     fn from(str_val: &String) -> Self {
         if str_val.starts_with("S") {
@@ -289,8 +302,55 @@ impl From<Row> for ProcedureRow {
     }
 }
 
+impl Into<comfy_table::Row> for ProcedureRow {
+    fn into(self) -> comfy_table::Row {
+        let procedure_type: String = self.procedure_type.into();
+        let mut row = comfy_table::Row::new();
+        row.add_cell(comfy_table::Cell::new(procedure_type))
+            .add_cell(comfy_table::Cell::new(self.id))
+            .add_cell(comfy_table::Cell::new(self.name))
+            .add_cell(comfy_table::Cell::new(self.description));
+
+        return row;
+    }
+}
+
 #[derive(Default, Debug)]
 pub struct ProceduresTable(pub Vec<ProcedureRow>);
+
+impl Into<comfy_table::Table> for ProceduresTable {
+    fn into(self) -> comfy_table::Table {
+        let mut table = comfy_table::Table::new();
+        table
+            .load_preset(comfy_table::presets::UTF8_FULL)
+            .set_content_arrangement(comfy_table::ContentArrangement::Dynamic)
+            .set_header(vec![
+                comfy_table::Cell::new("Procedure Type")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("ID")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("Name")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("Description")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+            ])
+            .add_rows(
+                self.into_iter()
+                    .map(|row| row.into())
+                    .collect::<Vec<comfy_table::Row>>(),
+            );
+
+        return table;
+    }
+}
 
 impl IntoIterator for ProceduresTable {
     type Item = ProcedureRow;
@@ -351,8 +411,60 @@ impl From<Row> for DetectionRow {
     }
 }
 
+impl Into<comfy_table::Row> for DetectionRow {
+    fn into(self) -> comfy_table::Row {
+        let detects = if self.detects.is_some() {
+            self.detects.unwrap()
+        } else {
+            String::new()
+        };
+
+        let mut row = comfy_table::Row::new();
+        row.add_cell(comfy_table::Cell::new(self.id))
+            .add_cell(comfy_table::Cell::new(self.data_source))
+            .add_cell(comfy_table::Cell::new(self.data_comp))
+            .add_cell(comfy_table::Cell::new(detects));
+
+        return row;
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct DetectionsTable(pub Vec<DetectionRow>);
+
+impl Into<comfy_table::Table> for DetectionsTable {
+    fn into(self) -> comfy_table::Table {
+        let mut table = comfy_table::Table::new();
+        table
+            .load_preset(comfy_table::presets::UTF8_FULL)
+            .set_content_arrangement(comfy_table::ContentArrangement::Dynamic)
+            .set_header(vec![
+                comfy_table::Cell::new("Procedure Type")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("ID")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("Name")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("Description")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+            ])
+            .add_rows(
+                self.into_iter()
+                    .map(|row| row.into())
+                    .collect::<Vec<comfy_table::Row>>(),
+            );
+
+        return table;
+    }
+}
 
 impl IntoIterator for DetectionsTable {
     type Item = DetectionRow;
@@ -404,39 +516,37 @@ pub struct Technique {
     pub detections: Option<DetectionsTable>,
 }
 
-impl Technique {
-    pub fn fetch_technique(
-        technique_id: &str,
-        web_client: &impl WebFetch,
-    ) -> Result<Technique, error::Error> {
-        let url = format!("{}{}", TECHNIQUES_URL, technique_id.to_uppercase());
-        let fetched_response = web_client.fetch(url.as_str())?;
-        let document = Document::from(fetched_response.as_str());
-        let mut tables = scrape_entity_h2_tables(&document);
+pub fn fetch_technique(
+    technique_id: &str,
+    web_client: &impl WebFetch,
+) -> Result<Technique, error::Error> {
+    let url = format!("{}{}", TECHNIQUES_URL, technique_id.to_uppercase().replace(".", "/"));
+    let fetched_response = web_client.fetch(url.as_str())?;
+    let document = Document::from(fetched_response.as_str());
+    let mut tables = scrape_entity_h2_tables(&document);
 
-        let technique = Technique {
-            id: technique_id.to_string(),
-            name: scrape_entity_name(&document),
-            description: scrape_entity_description(&document),
-            procedures: if let Some(examples_table) = tables.remove("examples") {
-                examples_table.into()
-            } else {
-                None
-            },
-            mitigations: if let Some(mitigations_table) = tables.remove("mitigations") {
-                mitigations_table.into()
-            } else {
-                None
-            },
-            detections: if let Some(detections_table) = tables.remove("detection") {
-                detections_table.into()
-            } else {
-                None
-            },
-        };
+    let technique = Technique {
+        id: technique_id.to_string(),
+        name: scrape_entity_name(&document),
+        description: scrape_entity_description(&document),
+        procedures: if let Some(examples_table) = tables.remove("examples") {
+            examples_table.into()
+        } else {
+            None
+        },
+        mitigations: if let Some(mitigations_table) = tables.remove("mitigations") {
+            mitigations_table.into()
+        } else {
+            None
+        },
+        detections: if let Some(detections_table) = tables.remove("detection") {
+            detections_table.into()
+        } else {
+            None
+        },
+    };
 
-        return Ok(technique);
-    }
+    return Ok(technique);
 }
 
 pub mod domain {
@@ -467,7 +577,11 @@ pub mod domain {
             }
 
             if let Some(used_for) = row.get_col(4) {
-                sub_technique.used_for = remove_ext_link_ref(&used_for);
+                sub_technique.used_for = remove_ext_link_ref(&used_for.trim())
+                    .split("\n")
+                    .map(|str_slice| str_slice.trim().to_string())
+                    .collect::<Vec<String>>()
+                    .join("\n");
             }
 
             return sub_technique;
@@ -521,7 +635,11 @@ pub mod domain {
             }
 
             if let Some(used_for) = row.get_col(inx) {
-                technique.used_for = remove_ext_link_ref(&used_for);
+                technique.used_for = remove_ext_link_ref(&used_for.trim())
+                    .split("\n")
+                    .map(|str_slice| str_slice.trim().to_string())
+                    .collect::<Vec<String>>()
+                    .join("\n");
             }
 
             return technique;
@@ -575,6 +693,61 @@ pub mod domain {
         }
     }
 
+    impl Into<comfy_table::Table> for DomainTechniquesTable {
+        fn into(self) -> comfy_table::Table {
+            let mut table = comfy_table::Table::new();
+            table
+                .load_preset(comfy_table::presets::UTF8_FULL)
+                .set_content_arrangement(comfy_table::ContentArrangement::Dynamic)
+                .set_header(vec![
+                    comfy_table::Cell::new("Domain")
+                        .set_alignment(comfy_table::CellAlignment::Center)
+                        .add_attribute(comfy_table::Attribute::Bold)
+                        .fg(comfy_table::Color::Red),
+                    comfy_table::Cell::new("ID")
+                        .set_alignment(comfy_table::CellAlignment::Center)
+                        .add_attribute(comfy_table::Attribute::Bold)
+                        .fg(comfy_table::Color::Red),
+                    comfy_table::Cell::new("Name")
+                        .set_alignment(comfy_table::CellAlignment::Center)
+                        .add_attribute(comfy_table::Attribute::Bold)
+                        .fg(comfy_table::Color::Red),
+                    comfy_table::Cell::new("")
+                        .set_alignment(comfy_table::CellAlignment::Center)
+                        .add_attribute(comfy_table::Attribute::Bold)
+                        .fg(comfy_table::Color::Red),
+                ]);
+
+            for technique in self {
+                table.add_row(vec![
+                    comfy_table::Cell::new(technique.id.clone()),
+                    comfy_table::Cell::new(technique.name),
+                    comfy_table::Cell::new(technique.used_for),
+                ]);
+
+                if let Some(sub_techniques) = technique.sub_techniques {
+                    table.add_rows(
+                        sub_techniques
+                            .into_iter()
+                            .map(|sub_technique| {
+                                vec![
+                                    comfy_table::Cell::new(format!(
+                                        "{}{}",
+                                        technique.id, sub_technique.id
+                                    )),
+                                    comfy_table::Cell::new(sub_technique.name),
+                                    comfy_table::Cell::new(sub_technique.used_for),
+                                ]
+                            })
+                            .collect::<Vec<Vec<comfy_table::Cell>>>(),
+                    );
+                }
+            }
+
+            return table;
+        }
+    }
+
     impl From<Table> for Option<DomainTechniquesTable> {
         fn from(table: Table) -> Self {
             if table.is_empty() {
@@ -624,11 +797,11 @@ mod tests {
         );
 
         let fetched_sub_techniques = fetch_techniques(Domain::ENTERPRISE, &fake_reqwest)?
-                .into_iter()
-                .filter(|technique| technique.sub_techniques.is_some())
-                .map(|technique| technique.sub_techniques.as_ref().unwrap().len())
-                .reduce(|accum, len| accum + len)
-                .unwrap();
+            .into_iter()
+            .filter(|technique| technique.sub_techniques.is_some())
+            .map(|technique| technique.sub_techniques.as_ref().unwrap().len())
+            .reduce(|accum, len| accum + len)
+            .unwrap();
 
         assert_eq!(
             fetched_sub_techniques,
@@ -656,11 +829,11 @@ mod tests {
             .set_success_response(include_str!("html/attck/techniques/mobile.html").to_string());
 
         let fetched_sub_techniques = fetch_techniques(Domain::MOBILE, &fake_reqwest)?
-                .into_iter()
-                .filter(|technique| technique.sub_techniques.is_some())
-                .map(|technique| technique.sub_techniques.as_ref().unwrap().len())
-                .reduce(|accum, len| accum + len)
-                .unwrap();
+            .into_iter()
+            .filter(|technique| technique.sub_techniques.is_some())
+            .map(|technique| technique.sub_techniques.as_ref().unwrap().len())
+            .reduce(|accum, len| accum + len)
+            .unwrap();
 
         assert_eq!(fetched_sub_techniques, SCRAPED_SUB_TECHINQUES_MOBILE_ROWS);
 
@@ -700,7 +873,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default().set_success_response(
             include_str!("html/attck/techniques/enterprise_deploy_container.html").to_string(),
         );
-        let fetched_technique = Technique::fetch_technique(TEST_TECHNIQUE_ID, &fake_reqwest)?;
+        let fetched_technique = fetch_technique(TEST_TECHNIQUE_ID, &fake_reqwest)?;
 
         assert!(
             fetched_technique.procedures.is_some(),
@@ -737,7 +910,7 @@ mod tests {
         let fake_reqwest = FakeHttpReqwest::default().set_success_response(
             include_str!("html/attck/techniques/enterprise_parent_pid_spoofing.html").to_string(),
         );
-        let fetched_sub_techniques = Technique::fetch_technique(TEST_TECHNIQUE_ID, &fake_reqwest)?;
+        let fetched_sub_techniques = fetch_technique(TEST_TECHNIQUE_ID, &fake_reqwest)?;
 
         assert!(
             fetched_sub_techniques.procedures.is_some(),
