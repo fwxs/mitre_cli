@@ -1,11 +1,42 @@
-use std::str::FromStr;
+use std::{str::FromStr, fmt::Display};
 
 use crate::{
     attack::{data_sources, groups, mitigations, software, tactics, techniques},
-    WebFetch,
+    WebFetch
 };
 use structopt::StructOpt;
 
+#[derive(Debug, Default, Clone, Copy)]
+pub enum Output {
+    JSON,
+    #[default]
+    STDOUT
+}
+
+impl FromStr for Output {
+    type Err = crate::error::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "json" => Ok(Output::JSON),
+            "stdout" => Ok(Output::STDOUT),
+            _ => Err(crate::error::Error::InvalidValue(format!("output type {} is not valid", s)))
+        }
+    }
+}
+
+impl Display for Output {
+    fn fmt(&self, std_fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            std_fmt,
+            "{}",
+            match self {
+                Output::STDOUT => "stdout",
+                Output::JSON => "json"
+            }
+        )
+    }
+}
 
 #[derive(StructOpt)]
 #[structopt(no_version)]
@@ -330,51 +361,139 @@ pub enum AttackListCommand {
     Tactics {
         /// Tactics of the specified domain (enterprise, ics, mobile)
         #[structopt(long)]
-        domain: String
+        domain: String,
+
+        /// Output command result to stdout or as JSON
+        #[structopt(long, default_value)]
+        output: Output
     },
     /// Mitre ATT&CK techniques
     Techniques {
         /// Techniques associated to the specified domain (enterprise, ics, mobile)
         #[structopt(long)]
-        domain: String
+        domain: String,
+
+        /// Output command result to stdout or as JSON
+        #[structopt(long, default_value)]
+        output: Output
     },
     /// Mitre ATT&CK mitigations
     Mitigations {
         /// Domain-specific mitre mitigations
         #[structopt(long)]
-        domain: String
+        domain: String,
+
+        /// Output command result to stdout or as JSON
+        #[structopt(long, default_value)]
+        output: Output
     },
     /// Mitre ATT&CK software
-    Software,
+    Software {
+        /// Output command result to stdout or as JSON
+        #[structopt(long, default_value)]
+        output: Output
+    },
     /// Mitre ATT&CK groups
-    Groups,
+    Groups {
+        /// Output command result to stdout or as JSON
+        #[structopt(long, default_value)]
+        output: Output
+    },
     /// Mitre ATT&CK data sources
-    DataSources,
+    DataSources {
+        /// Output command result to stdout or as JSON
+        #[structopt(long, default_value)]
+        output: Output
+    },
 }
 
 impl AttackListCommand {
     fn handle(self, req_client: impl WebFetch) -> Result<(), crate::error::Error> {
-        let entity_table: comfy_table::Table = match self {
-            AttackListCommand::Tactics { domain } => {
-                tactics::fetch_tactics(tactics::Domain::from_str(&domain)?, &req_client)?.into()
-            }
-            AttackListCommand::Techniques { domain } => {
-                techniques::fetch_techniques(techniques::Domain::from_str(&domain)?, &req_client)?
-                    .into()
-            }
-            AttackListCommand::Mitigations { domain } => mitigations::fetch_mitigations(
-                mitigations::Domain::from_str(&domain)?,
-                &req_client,
-            )?
-            .into(),
-            AttackListCommand::Software => software::fetch_software(&req_client)?.into(),
-            AttackListCommand::Groups => groups::fetch_groups(&req_client)?.into(),
-            AttackListCommand::DataSources => data_sources::fetch_data_sources(&req_client)?.into(),
+        match self {
+            AttackListCommand::Tactics { ref domain, output} => self.handle_list_tactics(domain, &output, req_client)?,
+            AttackListCommand::Techniques { ref domain, output } => self.handle_list_techniques(domain, &output, req_client)?,
+            AttackListCommand::Mitigations { ref domain, output } => self.handle_list_mitigations(domain, &output, req_client)?,
+            AttackListCommand::Software {output} => self.handle_list_software(&output, req_client)?,
+            AttackListCommand::Groups {output} => self.handle_list_groups(&output, req_client)?,
+            AttackListCommand::DataSources {output} => self.handle_list_data_sources(&output, req_client)?
         };
 
-        println!("{}", entity_table);
-
         return Ok(());
+    }
+
+    fn handle_list_tactics(&self, domain: &str, output: &Output, req_client: impl WebFetch) -> Result<(), crate::error::Error> {
+        let tactics_table = tactics::fetch_tactics(tactics::Domain::from_str(&domain)?, &req_client)?;
+
+        match output {
+            Output::STDOUT => self.stdout_output(tactics_table.into()),
+            Output::JSON => self.json_output(tactics_table)
+        };
+
+        Ok(())
+    }
+
+    fn handle_list_techniques(&self, domain: &str, output: &Output, req_client: impl WebFetch) -> Result<(), crate::error::Error> {
+        let techniques_table = techniques::fetch_techniques(techniques::Domain::from_str(&domain)?, &req_client)?;
+
+        match output {
+            Output::STDOUT => self.stdout_output(techniques_table.into()),
+            Output::JSON => self.json_output(techniques_table)
+        };
+
+        Ok(())
+    }
+
+    fn handle_list_mitigations(&self, domain: &str, output: &Output, req_client: impl WebFetch) -> Result<(), crate::error::Error> {
+        let mitigations_table = mitigations::fetch_mitigations(mitigations::Domain::from_str(&domain)?,  &req_client)?;
+
+        match output {
+            Output::STDOUT => self.stdout_output(mitigations_table.into()),
+            Output::JSON => self.json_output(mitigations_table)
+        };
+
+        Ok(())
+    }
+
+    fn handle_list_software(&self, output: &Output, req_client: impl WebFetch) -> Result<(), crate::error::Error> {
+        let software_table = software::fetch_software( &req_client)?;
+
+        match output {
+            Output::STDOUT => self.stdout_output(software_table.into()),
+            Output::JSON => self.json_output(software_table)
+        };
+
+        Ok(())
+    }
+
+    fn handle_list_groups(&self, output: &Output, req_client: impl WebFetch) -> Result<(), crate::error::Error> {
+        let groups_table = groups::fetch_groups(&req_client)?;
+
+        match output {
+            Output::STDOUT => self.stdout_output(groups_table.into()),
+            Output::JSON => self.json_output(groups_table)
+        };
+
+        Ok(())
+    }
+
+    fn handle_list_data_sources(&self, output: &Output, req_client: impl WebFetch) -> Result<(), crate::error::Error> {
+        let data_sources_table = data_sources::fetch_data_sources( &req_client)?;
+
+        match output {
+            Output::STDOUT => self.stdout_output(data_sources_table.into()),
+            Output::JSON => self.json_output(data_sources_table)
+        };
+
+        Ok(())
+    }
+
+    fn stdout_output(&self, table: comfy_table::Table) {
+        println!("{}", table);
+    }
+
+    fn json_output(&self, entity: impl serde::Serialize) {
+        println!("{}", serde_json::to_string_pretty(&entity).unwrap());
+
     }
 }
 

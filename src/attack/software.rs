@@ -1,6 +1,6 @@
 use select::document::Document;
-
 use crate::{error, WebFetch};
+use serde::{Serialize, Deserialize};
 
 use super::{
     scrape_entity_description, scrape_entity_h2_tables, scrape_entity_name, scrape_tables,
@@ -9,7 +9,7 @@ use super::{
 
 const ATTCK_SOFTWARE_URL: &'static str = "https://attack.mitre.org/software/";
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct SoftwareRow {
     pub id: String,
     pub name: String,
@@ -68,7 +68,7 @@ impl From<Row> for SoftwareRow {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct SoftwareTable(pub Vec<SoftwareRow>);
 
 impl SoftwareTable {
@@ -139,7 +139,7 @@ impl From<Table> for SoftwareTable {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct AssocGroupsRow {
     pub id: String,
     pub name: String,
@@ -171,7 +171,7 @@ impl Into<comfy_table::Row> for AssocGroupsRow {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct AssocGroupsTable(pub Vec<AssocGroupsRow>);
 
 impl IntoIterator for AssocGroupsTable {
@@ -225,7 +225,7 @@ impl Into<comfy_table::Table> for AssocGroupsTable {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Software {
     pub id: String,
     pub name: String,

@@ -1,5 +1,5 @@
 use select::document::Document;
-
+use serde::{Serialize, Deserialize};
 use crate::{error, WebFetch};
 
 use super::{
@@ -9,7 +9,7 @@ use super::{
 
 const ATTCK_GROUPS_URL: &'static str = "https://attack.mitre.org/groups/";
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct GroupRow {
     pub id: String,
     pub name: String,
@@ -68,7 +68,7 @@ impl Into<comfy_table::Row> for GroupRow {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct GroupsTable(pub Vec<GroupRow>);
 
 impl Into<comfy_table::Table> for GroupsTable {
@@ -139,7 +139,7 @@ impl From<Table> for GroupsTable {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct SoftwareRow {
     pub id: String,
     pub name: String,
@@ -177,7 +177,7 @@ impl Into<comfy_table::Row> for SoftwareRow {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct SoftwareTable(pub Vec<SoftwareRow>);
 
 impl IntoIterator for SoftwareTable {
@@ -245,7 +245,7 @@ impl SoftwareTable {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Group {
     pub id: String,
     pub name: String,

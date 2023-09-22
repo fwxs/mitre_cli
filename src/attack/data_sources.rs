@@ -7,10 +7,11 @@ use select::{
     predicate::{self, Predicate},
 };
 use std::{cell::RefCell, rc::Rc};
+use serde::{Serialize, Deserialize};
 
 const ATTCK_DATA_SOURCES_URL: &'static str = "https://attack.mitre.org/datasources/";
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct DataSourceRow {
     pub id: String,
     pub name: String,
@@ -57,7 +58,7 @@ impl Into<comfy_table::Row> for DataSourceRow {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct DataSourcesTable(pub Vec<DataSourceRow>);
 
 impl Into<comfy_table::Table> for DataSourcesTable {
@@ -124,7 +125,7 @@ impl From<Table> for DataSourcesTable {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct SubDetectionRow {
     pub id: String,
     pub name: String,
@@ -151,7 +152,7 @@ impl From<Row> for SubDetectionRow {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct DetectionRow {
     pub domain: String,
     pub id: String,
@@ -205,7 +206,7 @@ impl From<Row> for DetectionRow {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct DetectionsTable(pub Vec<DetectionRow>);
 
 impl DetectionsTable {
@@ -304,14 +305,14 @@ impl From<Table> for DetectionsTable {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct DataComponent {
     pub name: String,
     pub description: String,
     pub detections: DetectionsTable,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct DataSource {
     pub id: String,
     pub name: String,

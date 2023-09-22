@@ -1,8 +1,7 @@
 use std::str::FromStr;
-
 use select::document::Document;
-
 use crate::{error, WebFetch};
+use serde::{Serialize, Deserialize};
 
 use super::{
     scrape_entity_description, scrape_entity_h2_tables, scrape_entity_name, scrape_tables,
@@ -43,7 +42,7 @@ impl Into<&'static str> for Domain {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct MitigationRow {
     pub id: String,
     pub name: String,
@@ -61,7 +60,7 @@ impl Into<comfy_table::Row> for MitigationRow {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct MitigationTable(pub Vec<MitigationRow>);
 
 impl IntoIterator for MitigationTable {
@@ -172,7 +171,7 @@ impl From<Table> for Option<MitigationTable> {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Mitigation {
     pub id: String,
     pub name: String,

@@ -1,7 +1,6 @@
 use std::str::FromStr;
-
 use select::document::Document;
-
+use serde::{Serialize, Deserialize};
 use crate::{error::Error, WebFetch};
 
 use super::{
@@ -43,7 +42,7 @@ impl Into<&'static str> for Domain {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct TacticRow {
     pub id: String,
     pub name: String,
@@ -90,7 +89,7 @@ impl Into<comfy_table::Row> for TacticRow {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct TacticsTable(pub Vec<TacticRow>);
 
 impl IntoIterator for TacticsTable {
@@ -162,7 +161,7 @@ pub fn fetch_tactics(
         }));
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct Tactic {
     pub id: String,
     pub name: String,

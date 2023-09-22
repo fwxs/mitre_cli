@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use std::{cell::RefCell, str::FromStr};
-
 use select::document::Document;
+use serde::{Serialize, Deserialize};
 
 use crate::{error, remove_ext_link_ref, WebFetch};
 
@@ -44,7 +44,7 @@ impl Into<&'static str> for Domain {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct SubTechniqueRow {
     pub id: String,
     pub name: String,
@@ -80,7 +80,7 @@ impl From<Row> for SubTechniqueRow {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct TechniqueRow {
     pub id: String,
     pub name: String,
@@ -127,7 +127,7 @@ impl From<Row> for TechniqueRow {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct TechniquesTable(pub Vec<TechniqueRow>);
 
 impl IntoIterator for TechniquesTable {
@@ -233,7 +233,7 @@ pub fn fetch_techniques(
         .map_or(TechniquesTable::default(), |table| table.into()));
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum ProcedureType {
     SOFTWARE,
     GROUP,
@@ -268,7 +268,7 @@ impl Default for ProcedureType {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct ProcedureRow {
     pub id: String,
     pub name: String,
@@ -315,7 +315,7 @@ impl Into<comfy_table::Row> for ProcedureRow {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct ProceduresTable(pub Vec<ProcedureRow>);
 
 impl Into<comfy_table::Table> for ProceduresTable {
@@ -379,7 +379,7 @@ impl From<Table> for Option<ProceduresTable> {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct DetectionRow {
     pub id: String,
     pub data_source: String,
@@ -429,7 +429,7 @@ impl Into<comfy_table::Row> for DetectionRow {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct DetectionsTable(pub Vec<DetectionRow>);
 
 impl Into<comfy_table::Table> for DetectionsTable {
@@ -506,7 +506,7 @@ impl From<Table> for Option<DetectionsTable> {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct Technique {
     pub id: String,
     pub name: String,
@@ -556,8 +556,9 @@ pub mod domain {
         remove_ext_link_ref,
     };
     use std::{cell::RefCell, rc::Rc};
+    use super::{Serialize, Deserialize};
 
-    #[derive(Debug, Default)]
+    #[derive(Debug, Default, Serialize, Deserialize)]
     pub struct DomainSubTechniqueRow {
         pub id: String,
         pub name: String,
@@ -588,7 +589,7 @@ pub mod domain {
         }
     }
 
-    #[derive(Debug, Default)]
+    #[derive(Debug, Default, Serialize, Deserialize)]
     pub struct DomainTechniqueRow {
         pub domain: String,
         pub id: String,
@@ -646,7 +647,7 @@ pub mod domain {
         }
     }
 
-    #[derive(Debug, Default)]
+    #[derive(Debug, Default, Serialize, Deserialize)]
     pub struct DomainTechniquesTable(pub Vec<DomainTechniqueRow>);
 
     impl DomainTechniquesTable {

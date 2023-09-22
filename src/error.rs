@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum Error {
     Request(String),
@@ -20,5 +22,11 @@ impl From<&'static str> for Error {
 impl From<String> for Error {
     fn from(str_err: String) -> Self {
         Error::General(str_err)
+    }
+}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
