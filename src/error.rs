@@ -1,10 +1,14 @@
-use std::fmt::Display;
+use std::{fmt::Display, convert::Infallible};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Error {
     Request(String),
     General(String),
-    InvalidValue(String)
+    IO(String),
+    Parser(String),
+    InvalidValue(String),
+    TypeConversion(String),
+    PathNotFound(String)
 }
 
 impl From<reqwest::Error> for Error {
@@ -22,6 +26,24 @@ impl From<&'static str> for Error {
 impl From<String> for Error {
     fn from(str_err: String) -> Self {
         Error::General(str_err)
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(value: std::io::Error) -> Self {
+        Self::IO(value.to_string())
+    }
+}
+
+impl From<serde_json::error::Error> for Error {
+    fn from(value: serde_json::error::Error) -> Self {
+        Self::Parser(value.to_string())
+    }
+}
+
+impl From<Infallible> for Error {
+    fn from(value: Infallible) -> Self {
+        Self::TypeConversion(value.to_string())
     }
 }
 

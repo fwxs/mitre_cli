@@ -1,6 +1,3 @@
-// TODO: Save an offline version of the downloaded data.
-// TODO: Create the command line version for ATT&CK.
-
 use std::collections::HashMap;
 
 use crate::remove_ext_link_ref;
