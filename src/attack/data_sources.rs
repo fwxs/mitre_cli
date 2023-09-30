@@ -15,6 +15,7 @@ const ATTCK_DATA_SOURCES_URL: &'static str = "https://attack.mitre.org/datasourc
 pub struct DataSourceRow {
     pub id: String,
     pub name: String,
+    pub domain: String,
     pub description: String,
 }
 
@@ -30,7 +31,20 @@ impl From<Row> for DataSourceRow {
             data_source.name = name.to_string();
         }
 
-        if let Some(desc) = row.get_col(2) {
+        if let Some(domain) = row.get_col(2) {
+            data_source.domain = domain.to_string();
+
+            if data_source.domain.contains("\n") {
+                data_source.domain = data_source
+                    .domain
+                    .split("\n")
+                    .map(|str_slice| str_slice.trim().to_string())
+                    .collect::<Vec<String>>()
+                    .join("\n");
+            }
+        }
+
+        if let Some(desc) = row.get_col(3) {
             data_source.description = desc.to_string();
 
             if data_source.description.contains("\n") {
@@ -52,6 +66,7 @@ impl Into<comfy_table::Row> for DataSourceRow {
         let mut row = comfy_table::Row::new();
         row.add_cell(comfy_table::Cell::new(self.id))
             .add_cell(comfy_table::Cell::new(self.name))
+            .add_cell(comfy_table::Cell::new(self.domain))
             .add_cell(comfy_table::Cell::new(self.description));
 
         return row;
@@ -73,6 +88,10 @@ impl Into<comfy_table::Table> for DataSourcesTable {
                     .add_attribute(comfy_table::Attribute::Bold)
                     .fg(comfy_table::Color::Red),
                 comfy_table::Cell::new("Name")
+                    .set_alignment(comfy_table::CellAlignment::Center)
+                    .add_attribute(comfy_table::Attribute::Bold)
+                    .fg(comfy_table::Color::Red),
+                comfy_table::Cell::new("Domain")
                     .set_alignment(comfy_table::CellAlignment::Center)
                     .add_attribute(comfy_table::Attribute::Bold)
                     .fg(comfy_table::Color::Red),
@@ -162,10 +181,13 @@ pub struct DetectionRow {
 }
 
 impl DetectionRow {
-    fn add_subdetection(&mut self, sub_detection: SubDetectionRow) {
+    fn add_subdetection(&mut self, mut sub_detection: SubDetectionRow) {
         if self.sub_detections.is_none() {
             self.sub_detections = Some(vec![])
         }
+
+        sub_detection.id = format!("{}{}", self.id, sub_detection.id);
+        sub_detection.name = format!("{}{}", self.name, sub_detection.name);
 
         self.sub_detections.as_mut().unwrap().push(sub_detection);
     }
@@ -252,7 +274,7 @@ impl Into<comfy_table::Table> for DetectionsTable {
         for detection in self {
             table.add_row(vec![
                 comfy_table::Cell::new(detection.domain),
-                comfy_table::Cell::new(detection.id.clone()),
+                comfy_table::Cell::new(detection.id),
                 comfy_table::Cell::new(detection.name),
                 comfy_table::Cell::new(detection.detects),
             ]);
@@ -263,10 +285,7 @@ impl Into<comfy_table::Table> for DetectionsTable {
                         .into_iter()
                         .map(|sub_detections| {
                             vec![
-                                comfy_table::Cell::new(format!(
-                                    "{}{}",
-                                    detection.id, sub_detections.id
-                                )),
+                                comfy_table::Cell::new(sub_detections.id),
                                 comfy_table::Cell::new(sub_detections.name),
                                 comfy_table::Cell::new(sub_detections.detects),
                             ]
@@ -343,7 +362,7 @@ pub fn fetch_data_source(
 
 fn scrape_datasource_tables<'a>(document: &'a Document) -> Vec<(String, String, Table)> {
     let mut dt_tables: Vec<(String, String, Table)> = Vec::new();
-    let name = Rc::new(RefCell::new(String::new()));
+    let name: Rc<RefCell<String>> = Rc::new(RefCell::new(String::new()));
     let description = Rc::new(RefCell::new(String::new()));
 
     for node in document.find(

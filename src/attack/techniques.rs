@@ -89,10 +89,13 @@ pub struct TechniqueRow {
 }
 
 impl TechniqueRow {
-    fn add_subtechnique(&mut self, subtechnique: SubTechniqueRow) {
+    fn add_subtechnique(&mut self, mut subtechnique: SubTechniqueRow) {
         if self.sub_techniques.is_none() {
             self.sub_techniques = Some(vec![])
         }
+
+        subtechnique.id = format!("{}{}", self.id, subtechnique.id);
+        subtechnique.name = format!("{}: {}", self.name, subtechnique.name);
 
         self.sub_techniques.as_mut().unwrap().push(subtechnique);
     }
@@ -187,7 +190,7 @@ impl Into<comfy_table::Table> for TechniquesTable {
 
         for technique in self {
             table.add_row(vec![
-                comfy_table::Cell::new(technique.id.clone()),
+                comfy_table::Cell::new(technique.id),
                 comfy_table::Cell::new(technique.name),
                 comfy_table::Cell::new(technique.description),
             ]);
@@ -198,10 +201,7 @@ impl Into<comfy_table::Table> for TechniquesTable {
                         .into_iter()
                         .map(|sub_technique| {
                             vec![
-                                comfy_table::Cell::new(format!(
-                                    "{}{}",
-                                    technique.id, sub_technique.id
-                                )),
+                                comfy_table::Cell::new(sub_technique.id),
                                 comfy_table::Cell::new(sub_technique.name),
                                 comfy_table::Cell::new(sub_technique.description),
                             ]

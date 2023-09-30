@@ -33,5 +33,5 @@ SUBCOMMANDS:
 ## TODOs
 
 - [x] ~Scrape ATT&CK~
-- [ ] Save an offline version of the scraped data
+- [x] Save an offline version of the scraped data
 - [ ] Scrape other frameworks
