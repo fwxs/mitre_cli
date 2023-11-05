@@ -148,10 +148,10 @@ impl TacticsTable {
 }
 
 pub fn fetch_tactics(
-    tactic_type: Domain,
+    tactic_domain: Domain,
     req_client: &impl WebFetch,
 ) -> Result<TacticsTable, crate::error::Error> {
-    let fetched_response = req_client.fetch(tactic_type.into())?;
+    let fetched_response = req_client.fetch(tactic_domain.into())?;
     let document = Document::from(fetched_response.as_str());
 
     return Ok(scrape_tables(&document)

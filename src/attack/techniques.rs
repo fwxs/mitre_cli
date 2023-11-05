@@ -222,10 +222,10 @@ impl TechniquesTable {
 }
 
 pub fn fetch_techniques(
-    technique_type: Domain,
+    technique_domain: Domain,
     web_client: &impl WebFetch,
 ) -> Result<TechniquesTable, error::Error> {
-    let fetched_response = web_client.fetch(technique_type.into())?;
+    let fetched_response = web_client.fetch(technique_domain.into())?;
     let document = Document::from(fetched_response.as_str());
 
     return Ok(scrape_tables(&document)

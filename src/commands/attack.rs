@@ -877,13 +877,390 @@ impl AttackListCommand {
     }
 }
 
+#[derive(StructOpt, Debug)]
+pub enum AttackSearchSubCmd {
+    /// Mitre ATT&CK tactic
+    Tactic {
+        /// Search ATT&CK tactic by id
+        #[structopt(long)]
+        id: Option<String>,
+
+        /// Search ATT&CK tactic by name
+        #[structopt(long)]
+        name: Option<String>,
+
+        /// Search ATT&CK tactic in a specific domain (Default, enterprise)
+        #[structopt(long, default_value = "enterprise")]
+        domain: String
+    },
+
+    Technique {
+        /// Search ATT&CK technique by id
+        #[structopt(long)]
+        id: Option<String>,
+
+        /// Search ATT&CK technique by name
+        #[structopt(long)]
+        name: Option<String>,
+
+        /// Search ATT&CK technique in a specific domain (Default, enterprise)
+        #[structopt(long, default_value = "enterprise")]
+        domain: String
+    },
+
+    Mitigation {
+        /// Search ATT&CK mitigation by id
+        #[structopt(long)]
+        id: Option<String>,
+
+        /// Search ATT&CK mitigation by name
+        #[structopt(long)]
+        name: Option<String>,
+
+        /// Search ATT&CK mitigation in a specific domain (Default, enterprise)
+        #[structopt(long, default_value = "enterprise")]
+        domain: String
+    },
+
+    Software {
+        /// Search ATT&CK software by id
+        #[structopt(long)]
+        id: Option<String>,
+
+        /// Search ATT&CK software by name
+        #[structopt(long)]
+        name: Option<String>
+    },
+
+    Groups {
+        /// Search ATT&CK group by id
+        #[structopt(long)]
+        id: Option<String>,
+
+        /// Search ATT&CK group by name
+        #[structopt(long)]
+        name: Option<String>
+    },
+
+    DataSource {
+        /// Search ATT&CK data source by id
+        #[structopt(long)]
+        id: Option<String>,
+
+        /// Search ATT&CK data source by name
+        #[structopt(long)]
+        name: Option<String>
+    },
+}
+
+#[derive(StructOpt)]
+pub struct AttackSearchCommand {
+    /// Print command results on stdout or as JSON
+    #[structopt(short, long, global = true, default_value)]
+    pub output: Output,
+
+    #[structopt(subcommand)]
+    pub sub_cmd: AttackSearchSubCmd
+}
+
+impl AttackSearchCommand {
+    fn handle(self, req_client: impl WebFetch) -> Result<(), crate::error::Error> {
+        match self.sub_cmd {
+            AttackSearchSubCmd::Tactic { ref id, ref name, ref domain } => self.handle_tactic_search(id, name, domain, req_client)?,
+            AttackSearchSubCmd::Technique { ref id, ref name, ref domain } => self.handle_technique_search(id, name, domain, req_client)?,
+            AttackSearchSubCmd::Mitigation { ref id, ref name, ref domain } => self.handle_mitigation_search(id, name, domain, req_client)?,
+            AttackSearchSubCmd::Software { ref id, ref name } => self.handle_software_search(id, name, req_client)?,
+            AttackSearchSubCmd::Groups { ref id, ref name } => self.handle_groups_search(id, name, req_client)?,
+            AttackSearchSubCmd::DataSource { ref id, ref name } => self.handle_data_source_search(id, name, req_client)?
+        };
+
+        Ok(())
+    }
+
+    fn handle_tactic_search(&self, id: &Option<String>, name: &Option<String>, domain: &str, req_client: impl WebFetch) -> Result<(), crate::error::Error> {
+
+        if id.is_none() && name.is_none() {
+            return Err(crate::error::Error::InvalidValue(String::from("Neither tactic Id or name provided. You must provide one of them")));
+        }
+
+        let mut fetched_tactics = tactics::fetch_tactics(tactics::Domain::from_str(domain)?, &req_client)?.into_iter();
+        let tactic_found = match id {
+            Some(_id) => match fetched_tactics.find(|row| row.id.eq_ignore_ascii_case(_id)) {
+                Some(tac) => tac,
+                None => return Err(crate::error::Error::InvalidValue(format!("No tactic with id {}", _id)))
+            },
+            None => match name {
+                Some(_name) => match fetched_tactics.find(|row| row.name.eq_ignore_ascii_case(_name)) {
+                    Some(tac) => tac,
+                    None =>return Err(crate::error::Error::InvalidValue(format!("No tactic with name {}", _name)))
+                },
+                None => return Err(crate::error::Error::InvalidValue(String::from("No filter provided")))
+            }
+        };
+
+        match self.output {
+            Output::STDOUT => {
+                println!("[*] Tactic Id: {}", tactic_found.id);
+                println!("[*] Tactic name: {}",tactic_found.name);
+                println!("[*] Tactic description: {}", tactic_found.description);
+            },
+            Output::JSON => self.json_output(tactic_found),
+        };
+
+        Ok(())
+    }
+
+    fn handle_technique_search(&self, id: &Option<String>, name: &Option<String>, domain: &str, req_client: impl WebFetch) -> Result<(), crate::error::Error> {
+        if id.is_none() && name.is_none() {
+            return Err(crate::error::Error::InvalidValue(String::from("Neither tactic Id or name provided. You must provide one of them")));
+        }
+
+        let fetched_techniques = techniques::fetch_techniques(techniques::Domain::from_str(&domain)?, &req_client)?.into_iter();
+
+        match id {
+            Some(_id) if !_id.contains('.') => self.handle_technique("id", _id, fetched_techniques)?,
+            Some(_id) if _id.contains('.') => self.handle_sub_technique("id", _id, fetched_techniques)?,
+            None => match name {
+                Some(_name) if !_name.contains(':') => self.handle_technique("name", _name, fetched_techniques)?,
+                Some(_name) if _name.contains(':') => self.handle_sub_technique("name", _name, fetched_techniques)?,
+                _ => return Err(crate::error::Error::InvalidValue(String::from("Invalid technique id")))
+            },
+            _ => return Err(crate::error::Error::InvalidValue(String::from("Invalid technique name")))
+        }
+
+        Ok(())
+    }
+
+    fn handle_mitigation_search(&self, id: &Option<String>, name: &Option<String>, domain: &str, req_client: impl WebFetch) -> Result<(), crate::error::Error> {
+        if id.is_none() && name.is_none() {
+            return Err(crate::error::Error::InvalidValue(String::from("Neither mitigation Id or name provided. You must provide one of them")));
+        }
+
+        let mut fetched_mitigations = mitigations::fetch_mitigations(mitigations::Domain::from_str(domain)?, &req_client)?.into_iter();
+        let mitigation_found = match id {
+            Some(_id) => match fetched_mitigations.find(|row| row.id.eq_ignore_ascii_case(_id)) {
+                Some(mit) => mit,
+                None => return Err(crate::error::Error::InvalidValue(format!("No mitigation with id {}", _id)))
+            },
+            None => match name {
+                Some(_name) => match fetched_mitigations.find(|row| row.name.eq_ignore_ascii_case(_name)) {
+                    Some(mit) => mit,
+                    None =>return Err(crate::error::Error::InvalidValue(format!("No mitigation with name {}", _name)))
+                },
+                None => return Err(crate::error::Error::InvalidValue(String::from("No filter provided")))
+            }
+        };
+
+        match self.output {
+            Output::STDOUT => {
+                println!("[*] Mitigation Id: {}", mitigation_found.id);
+                println!("[*] Mitigation name: {}",mitigation_found.name);
+                println!("[*] Mitigation description: {}", mitigation_found.description);
+            },
+            Output::JSON => self.json_output(mitigation_found),
+        };
+
+        Ok(())
+    }
+
+    fn handle_software_search(&self, id: &Option<String>, name: &Option<String>, req_client: impl WebFetch) -> Result<(), crate::error::Error> {
+        if id.is_none() && name.is_none() {
+            return Err(crate::error::Error::InvalidValue(String::from("Neither software Id or name provided. You must provide one of them")));
+        }
+
+        let mut fetched_software = software::fetch_software(&req_client)?.into_iter();
+        let software_found = match id {
+            Some(_id) => match fetched_software.find(|row| row.id.eq_ignore_ascii_case(_id)) {
+                Some(soft) => soft,
+                None => return Err(crate::error::Error::InvalidValue(format!("No software with id {}", _id)))
+            },
+            None => match name {
+                Some(_name) => match fetched_software.find(|row| row.name.eq_ignore_ascii_case(_name)) {
+                    Some(soft) => soft,
+                    None =>return Err(crate::error::Error::InvalidValue(format!("No software with name {}", _name)))
+                },
+                None => return Err(crate::error::Error::InvalidValue(String::from("No filter provided")))
+            }
+        };
+
+        match self.output {
+            Output::STDOUT => {
+                println!("[*] Tactic Id: {}", software_found.id);
+                println!("[*] Tactic name: {}",software_found.name);
+                println!("[*] Tactic description: {}", software_found.description);
+            },
+            Output::JSON => self.json_output(software_found),
+        };
+
+        Ok(())
+    }
+
+    fn handle_groups_search(&self, id: &Option<String>, name: &Option<String>, req_client: impl WebFetch) -> Result<(), crate::error::Error> {
+        if id.is_none() && name.is_none() {
+            return Err(crate::error::Error::InvalidValue(String::from("Neither group Id or name provided. You must provide one of them")));
+        }
+
+        let mut fetched_groups = groups::fetch_groups(&req_client)?.into_iter();
+        let group_found = match id {
+            Some(_id) => match fetched_groups.find(|row| row.id.eq_ignore_ascii_case(_id)) {
+                Some(group) => group,
+                None => return Err(crate::error::Error::InvalidValue(format!("No group with id {}", _id)))
+            },
+            None => match name {
+                Some(_name) => match fetched_groups.find(|row| row.name.eq_ignore_ascii_case(_name)) {
+                    Some(group) => group,
+                    None =>return Err(crate::error::Error::InvalidValue(format!("No group with name {}", _name)))
+                },
+                None => return Err(crate::error::Error::InvalidValue(String::from("No filter provided")))
+            }
+        };
+
+        match self.output {
+            Output::STDOUT => {
+                println!("[*] Group Id: {}", group_found.id);
+                println!("[*] Group name: {}",group_found.name);
+                println!("[*] Group description: {}", group_found.description);
+            },
+            Output::JSON => self.json_output(group_found),
+        };
+        
+        Ok(())
+    }
+
+    fn handle_data_source_search(&self, id: &Option<String>, name: &Option<String>, req_client: impl WebFetch) -> Result<(), crate::error::Error> {
+        if id.is_none() && name.is_none() {
+            return Err(crate::error::Error::InvalidValue(String::from("Neither data source Id or name provided. You must provide one of them")));
+        }
+
+        let mut fetched_data_sources = data_sources::fetch_data_sources(&req_client)?.into_iter();
+        let data_source_found = match id {
+            Some(_id) => match fetched_data_sources.find(|row| row.id.eq_ignore_ascii_case(_id)) {
+                Some(data_source) => data_source,
+                None => return Err(crate::error::Error::InvalidValue(format!("No data source with id {}", _id)))
+            },
+            None => match name {
+                Some(_name) => match fetched_data_sources.find(|row| row.name.eq_ignore_ascii_case(_name)) {
+                    Some(data_source) => data_source,
+                    None =>return Err(crate::error::Error::InvalidValue(format!("No data source with name {}", _name)))
+                },
+                None => return Err(crate::error::Error::InvalidValue(String::from("No filter provided")))
+            }
+        };
+
+        match self.output {
+            Output::STDOUT => {
+                println!("[*] Data Source Id: {}", data_source_found.id);
+                println!("[*] Data Source domain: {}", data_source_found.domain);
+                println!("[*] Data Source name: {}",data_source_found.name);
+                println!("[*] Data Source description: {}", data_source_found.description);
+            },
+            Output::JSON => self.json_output(data_source_found),
+        };
+        
+        Ok(())
+    }
+
+    fn handle_technique(&self, key: &str, value: &str, fetched_techniques: std::vec::IntoIter<techniques::TechniqueRow>) -> Result<(), crate::error::Error> {
+        let technique_found = self.find_technique(key, value, fetched_techniques)?;
+
+        match self.output {
+            Output::STDOUT => {
+                println!("[*] Technique ID: {}", technique_found.id);
+                println!("[*] Technique Name: {}", technique_found.name);
+                println!("[*] Technique description: {}", technique_found.description);
+
+                match technique_found.sub_techniques {
+                    Some(sub_techniques) => {
+                        let sub_techniques_ids = sub_techniques.into_iter().map(|row| row.id).collect::<Vec<String>>().join(", ");
+                        println!("[+] Sub techniques IDs: {}", sub_techniques_ids);
+                    },
+                    None => ()
+                }
+            },
+            Output::JSON => self.json_output(technique_found)
+        }
+
+        Ok(())
+    }
+
+    fn handle_sub_technique(&self, key: &str, value: &str, fetched_techniques: std::vec::IntoIter<techniques::TechniqueRow>) -> Result<(), crate::error::Error> {
+
+        let technique_found = self.find_technique(key, value, fetched_techniques)?;
+        let sub_technique = match key {
+                "id" => {
+                    let _id = value.split('.').collect::<Vec<&str>>();
+                    let (_id, sub_id) = (_id[0], _id[1]);
+                    
+        
+                    match technique_found.sub_techniques {
+                        Some(sub_techniques) => match sub_techniques.into_iter().find(|row| row.id.ends_with(sub_id)){
+                            Some(sub_technique) => sub_technique,
+                            None => return Err(crate::error::Error::InvalidValue(format!("No sub technique with {} {}", key, value)))
+                        },
+                        None => return Err(crate::error::Error::InvalidValue(format!("No sub technique with {} {}", key, value)))
+                    }
+                },
+                "name" => {
+                    let _name = value.split(':').collect::<Vec<&str>>();
+                    let (_name, sub_name) = (_name[0], _name[1]);
+    
+                    match technique_found.sub_techniques {
+                        Some(sub_techniques) => match sub_techniques.into_iter().find(|row| row.name.ends_with(sub_name)) {
+                            Some(sub_technique) => sub_technique,
+                            None => return Err(crate::error::Error::InvalidValue(format!("No sub technique with {} {}", key, value)))
+                        },
+                        None => return Err(crate::error::Error::InvalidValue(format!("No sub technique with {} {}", key, value)))
+                    }
+                },
+                _ => return Err(crate::error::Error::General(String::from("No filter provided.")))
+            }; 
+
+        match self.output {
+            Output::STDOUT => {
+                println!("[*] Sub technique ID: {}", sub_technique.id);
+                println!("[*] Sub technique Name: {}", sub_technique.name);
+                println!("[*] Sub technique description: {}", sub_technique.description);
+            },
+            Output::JSON => self.json_output(sub_technique)
+        }
+
+        Ok(())
+    }
+
+    fn find_technique(&self, key: &str, value: &str, mut fetched_techniques: std::vec::IntoIter<techniques::TechniqueRow>) -> Result<techniques::TechniqueRow, crate::error::Error> {
+        match key {
+            "id" => {
+                match fetched_techniques.find(|row| row.id.eq_ignore_ascii_case(value)) {
+                    None => Err(crate::error::Error::InvalidValue(format!("No technique with {} {}", key, value))),
+                    Some(found_technique) => Ok(found_technique)
+                }
+            },
+            "name" => {
+                match fetched_techniques.find(|row| row.name.eq_ignore_ascii_case(value)) {
+                    None => Err(crate::error::Error::InvalidValue(format!("No technique with {} {}", key, value))),
+                    Some(found_technique) => Ok(found_technique)
+                }
+            },
+            _ => Err(crate::error::Error::General(String::from("No filter provided.")))
+        }
+    }
+
+    fn json_output(&self, entity: impl serde::Serialize) {
+        println!("{}", serde_json::to_string_pretty(&entity).unwrap());
+    }
+}
+
 #[derive(StructOpt)]
 #[structopt(no_version)]
 pub enum AttackCommand {
     /// List Mitre ATT&CK entities.
     List(AttackListCommand),
+
     /// Retrieve ATT&CK entity information (Name, Description and associated data)
     Describe(AttackDescribeCommand),
+
+    /// Search ATT&CK entity by id or name
+    Search(AttackSearchCommand)
 }
 
 impl AttackCommand {
@@ -893,8 +1270,9 @@ impl AttackCommand {
         match self {
             AttackCommand::List(list_cmd) => list_cmd.handle(req_client)?,
             AttackCommand::Describe(desc_cmd) => desc_cmd.handle(req_client)?,
+            AttackCommand::Search(search_cmd) => search_cmd.handle(req_client)?
         };
 
-        return Ok(());
+        Ok(())
     }
 }
