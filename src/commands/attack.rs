@@ -1251,6 +1251,268 @@ impl AttackSearchCommand {
 }
 
 #[derive(StructOpt)]
+enum AttackSyncSubCmd {
+    /// Sync ATT&CK tactics
+    Tactics {
+        #[structopt(short, long, default_value = "enterprise")]
+        domain: String
+    },
+
+    /// Sync ATT&CK techniques
+    Techniques {
+        #[structopt(short, long, default_value = "enterprise")]
+        domain: String
+    },
+
+    /// Sync ATT&CK mitigations
+    Mitigations {
+        #[structopt(short, long, default_value = "enterprise")]
+        domain: String
+    },
+
+    /// Sync ATT&CK groups
+    Groups,
+
+    /// Sync ATT&CK software
+    Software,
+
+    /// Sync ATT&CK data sources
+    DataSources
+}
+
+impl AttackSyncSubCmd {
+    fn sync_tactics(tactic_domain: &str, req_client: impl WebFetch) -> Result<(), crate::error::Error> {
+        log::info!("Syncing {} tactics.", tactic_domain);
+        let fetched_tactics = tactics::fetch_tactics(tactics::Domain::from_str(&tactic_domain)?, &req_client)?;
+
+        save_serde_file(
+            &attack_config_directory()?.join(tactic_domain),
+            &format!("{}.json", <Entities as Into<&str>>::into(Entities::TACTICS)),
+            &fetched_tactics,
+        )?;
+
+        let tactics_path = attack_config_directory()?.join(Into::<&str>::into(Entities::TACTICS));
+
+        fetched_tactics.into_iter()
+            .inspect(|row| log::info!("Syncing tactic ({}) {}", row.id, row.name))
+            .map(|row| tactics::fetch_tactic(&row.id, &req_client))
+            .inspect(
+                |fetch_result| if let Err(fetch_err) = fetch_result {
+                    log::error!("Error syncing tactic: {}", fetch_err.to_string())
+                }
+            )
+            .filter_map(Result::ok)
+            .map(
+                |fetched_tactic| save_serde_file(&tactics_path, &format!("{}.json", fetched_tactic.id), &fetched_tactic)
+            )
+            .for_each(|file_result| {
+                if let Err(err) = file_result {
+                    log::error!("Error saving file: {}", err.to_string())
+                }
+            });
+
+        log::info!("Tactics synced!");
+
+        Ok(())
+    }
+
+    fn sync_techniques(technique_domain: &str, req_client: impl WebFetch) -> Result<(), crate::error::Error> {
+        log::info!("Syncing {} techniques.", technique_domain);
+
+        let fetched_techniques = techniques::fetch_techniques(
+            techniques::Domain::from_str(&technique_domain)?,
+            &req_client
+        )?;
+
+        save_serde_file(
+            &attack_config_directory()?.join(technique_domain),
+            &format!("{}.json", <Entities as Into<&str>>::into(Entities::TECHNIQUES)),
+            &fetched_techniques,
+        )?;
+
+        let techniques_path = attack_config_directory()?.join(Into::<&str>::into(Entities::TECHNIQUES));
+        fetched_techniques.into_iter()
+            .inspect(|row| log::info!("Syncing technique ({}) {}", row.id, row.name))
+            .map(|row| techniques::fetch_technique(&row.id, &req_client))
+            .inspect(
+                |fetch_result| if let Err(fetch_err) = fetch_result {
+                    log::error!("Error syncing technique: {}", fetch_err.to_string())
+                }
+            )
+            .filter_map(Result::ok)
+            .map(
+                |fetched_technique| save_serde_file(&techniques_path, &format!("{}.json", fetched_technique.id), &fetched_technique)
+            )
+            .for_each(|file_result| {
+                if let Err(err) = file_result {
+                    log::error!("Error saving file: {}", err.to_string())
+                }
+            });
+
+        log::info!("Techniques synced!");
+
+        Ok(())
+    }
+
+    fn sync_mitigations(mitigations_domain: &str, req_client: impl WebFetch) -> Result<(), crate::error::Error> {
+        log::info!("Syncing {} mitigations.", mitigations_domain);
+
+        let fetched_mitigations = mitigations::fetch_mitigations(mitigations::Domain::from_str(&mitigations_domain)?, &req_client)?;
+        save_serde_file(
+            &attack_config_directory()?.join(mitigations_domain),
+            &format!("{}.json", <Entities as Into<&str>>::into(Entities::MITIGATIONS)),
+            &fetched_mitigations,
+        )?;
+
+        let mitigations_path = attack_config_directory()?.join(Into::<&str>::into(Entities::MITIGATIONS));
+        fetched_mitigations.into_iter()
+            .inspect(|row| log::info!("Syncing mitigation ({}) {}", row.id, row.name))
+            .map(|row| mitigations::fetch_mitigation(&row.id, &req_client))
+            .inspect(
+                |fetch_result| if let Err(fetch_err) = fetch_result {
+                    log::error!("Error syncing mitigation: {}", fetch_err.to_string())
+                }
+            )
+            .filter_map(Result::ok)
+            .map(
+                |fetched_mitigation| save_serde_file(&mitigations_path, &format!("{}.json", fetched_mitigation.id), &fetched_mitigation)
+            )
+            .for_each(|file_result| {
+                if let Err(err) = file_result {
+                    log::error!("Error saving file: {}", err.to_string())
+                }
+            });
+
+        log::info!("Mitigations synced!");
+
+        Ok(())
+    }
+
+    fn sync_groups(req_client: impl WebFetch) -> Result<(), crate::error::Error> {
+        log::info!("Syncing groups.");
+
+        let fetched_groups = groups::fetch_groups(&req_client)?;
+        save_serde_file(
+            &attack_config_directory()?,
+            &format!("{}.json", <Entities as Into<&str>>::into(Entities::GROUPS)),
+            &fetched_groups
+        )?;
+
+        let groups_path = attack_config_directory()?.join(Into::<&str>::into(Entities::GROUPS));
+        fetched_groups.into_iter()
+            .inspect(|row| log::info!("Syncing group ({}) {}", row.id, row.name))
+            .map(|row| groups::fetch_group(&row.id, &req_client))
+            .inspect(
+                |fetch_result| if let Err(fetch_err) = fetch_result {
+                    log::error!("Error syncing group: {}", fetch_err.to_string())
+                }
+            )
+            .filter_map(Result::ok)
+            .map(
+                |fetched_group| save_serde_file(&groups_path, &format!("{}.json", fetched_group.id), &fetched_group)
+            )
+            .for_each(|file_result| {
+                if let Err(err) = file_result {
+                    log::error!("Error saving file: {}", err.to_string())
+                }
+            });
+
+        log::info!("Groups synced!");
+
+        Ok(())
+    }
+
+    fn sync_software(req_client: impl WebFetch) -> Result<(), crate::error::Error> {
+        log::info!("Syncing software.");
+
+        let fetched_software = software::fetch_software(&req_client)?;
+        save_serde_file(
+            &attack_config_directory()?,
+            &format!("{}.json", <Entities as Into<&str>>::into(Entities::SOFTWARE)),
+            &fetched_software
+        )?;
+
+        let software_path = attack_config_directory()?.join(Into::<&str>::into(Entities::SOFTWARE));
+        fetched_software.into_iter()
+            .inspect(|row| log::info!("Syncing software ({}) {}", row.id, row.name))
+            .map(|row| software::fetch_software_info(&row.id, &req_client))
+            .inspect(
+                |fetch_result| if let Err(fetch_err) = fetch_result {
+                    log::error!("Error syncing software: {}", fetch_err.to_string())
+                }
+            )
+            .filter_map(Result::ok)
+            .map(
+                |fetched_software| save_serde_file(&software_path, &format!("{}.json", fetched_software.id), &fetched_software)
+            )
+            .for_each(|file_result| {
+                if let Err(err) = file_result {
+                    log::error!("Error saving file: {}", err.to_string())
+                }
+            });
+
+        log::info!("Software synced!");
+
+        Ok(())
+    }
+
+    fn sync_data_sources(req_client: impl WebFetch) -> Result<(), crate::error::Error> {
+        log::info!("Syncing Data Sources.");
+
+        let fetched_data_sources =  data_sources::fetch_data_sources(&req_client)?;
+        save_serde_file(
+            &attack_config_directory()?,
+            &format!("{}.json", <Entities as Into<&str>>::into(Entities::DATASOURCES)),
+            &fetched_data_sources
+        )?;
+
+        let data_sources_path = attack_config_directory()?.join(Into::<&str>::into(Entities::DATASOURCES));
+        fetched_data_sources.into_iter()
+            .inspect(|row| log::info!("Syncing Data Source ({}) {}", row.id, row.name))
+            .map(|row| data_sources::fetch_data_source(&row.id, &req_client))
+            .inspect(
+                |fetch_result| if let Err(fetch_err) = fetch_result {
+                    log::error!("Error syncing Data Source: {}", fetch_err.to_string())
+                }
+            )
+            .filter_map(Result::ok)
+            .map(
+                |fetched_data_source| save_serde_file(&data_sources_path, &format!("{}.json", fetched_data_source.id), &fetched_data_source)
+            )
+            .for_each(|file_result| {
+                if let Err(err) = file_result {
+                    log::error!("Error saving file: {}", err.to_string())
+                }
+            });
+
+        log::info!("Data Sources synced!");
+
+        Ok(())
+    }
+}
+
+#[derive(StructOpt)]
+pub struct AttackSyncCommand {
+
+    #[structopt(subcommand)]
+    cmd: AttackSyncSubCmd
+}
+
+impl AttackSyncCommand {
+    fn handle(self, req_client: impl WebFetch) -> Result<(), crate::error::Error> {
+        match self.cmd {
+            AttackSyncSubCmd::Tactics{ ref domain } => AttackSyncSubCmd::sync_tactics(domain, req_client)?,
+            AttackSyncSubCmd::Techniques { ref domain } => AttackSyncSubCmd::sync_techniques(domain, req_client)?,
+            AttackSyncSubCmd::Mitigations { ref domain } => AttackSyncSubCmd::sync_mitigations(domain, req_client)?,
+            AttackSyncSubCmd::Groups => AttackSyncSubCmd::sync_groups(req_client)?,
+            AttackSyncSubCmd::Software => AttackSyncSubCmd::sync_software(req_client)?,
+            AttackSyncSubCmd::DataSources => AttackSyncSubCmd::sync_data_sources(req_client)?
+        }
+        Ok(())
+    }
+}
+
+#[derive(StructOpt)]
 #[structopt(no_version)]
 pub enum AttackCommand {
     /// List Mitre ATT&CK entities.
@@ -1260,7 +1522,10 @@ pub enum AttackCommand {
     Describe(AttackDescribeCommand),
 
     /// Search ATT&CK entity by id or name
-    Search(AttackSearchCommand)
+    Search(AttackSearchCommand),
+
+    /// Sync specified ATT&CK entities and save them offline
+    Sync(AttackSyncCommand)
 }
 
 impl AttackCommand {
@@ -1270,7 +1535,8 @@ impl AttackCommand {
         match self {
             AttackCommand::List(list_cmd) => list_cmd.handle(req_client)?,
             AttackCommand::Describe(desc_cmd) => desc_cmd.handle(req_client)?,
-            AttackCommand::Search(search_cmd) => search_cmd.handle(req_client)?
+            AttackCommand::Search(search_cmd) => search_cmd.handle(req_client)?,
+            AttackCommand::Sync(sync_cmd) => sync_cmd.handle(req_client)?
         };
 
         Ok(())
