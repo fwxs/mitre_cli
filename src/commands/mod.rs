@@ -6,7 +6,7 @@ mod attack;
 #[structopt(name = "mitre_cli", about = "An oxidized Mitre Framework's scraper.", no_version)]
 pub enum Command {
     /// Mitre ATT&CK Framework scraper sub-menu
-    Attack(attack::AttackCommand)
+    Attack(attack::CommandRoot)
 }
 
 impl Command {
